@@ -1,0 +1,88 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+const migration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020001_one_dream_cup.sql"), "utf8");
+const retentionMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020002_retention_and_attribution.sql"), "utf8");
+const manualUpiMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020003_manual_upi_review.sql"), "utf8");
+const productionMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020004_production_hardening.sql"), "utf8");
+const privilegeMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020005_role_privileges.sql"), "utf8");
+const captainInvitationMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020006_captain_invitations.sql"), "utf8");
+const productionReferenceDataMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020007_production_reference_data.sql"), "utf8");
+const captainUpsertFixMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020008_fix_captain_registration_upsert.sql"), "utf8");
+
+describe("database security migration", () => {
+  it.each(["leads", "teams", "team_members", "payments", "payment_events", "consent_records", "audit_logs"])("enables RLS for %s", (table) => {
+    expect(migration).toContain(`alter table public.${table} enable row level security;`);
+  });
+
+  it("binds captain access to the authenticated profile", () => {
+    expect(migration).toContain("captain_profile_id = (select auth.uid())");
+  });
+
+  it("makes security event tables append-only for application roles", () => {
+    expect(migration).toContain("revoke update, delete on public.consent_records from anon, authenticated;");
+    expect(migration).toContain("revoke update, delete on public.payment_events from anon, authenticated;");
+    expect(migration).toContain("revoke update, delete on public.audit_logs from anon, authenticated;");
+  });
+
+  it("allows captains to append only their own profile-level marketing consent", () => {
+    expect(retentionMigration).toContain("profile_id = (select auth.uid()) and lead_id is null and purpose = 'marketing'");
+  });
+
+  it("requires an administrator and locks the payment row before manual confirmation", () => {
+    expect(manualUpiMigration).toContain("if not public.is_admin() then");
+    expect(manualUpiMigration).toContain("for update;");
+    expect(manualUpiMigration).toContain("status = 'paid'");
+  });
+
+  it("keeps shared rate-limit data private and callable only by the service role", () => {
+    expect(productionMigration).toContain("alter table public.request_rate_limits enable row level security;");
+    expect(productionMigration).toContain("grant execute on function public.consume_rate_limit(text, integer, integer) to service_role;");
+  });
+
+  it("commits a lead and both consent records through one service-only function", () => {
+    expect(productionMigration).toContain("create or replace function public.submit_public_lead(");
+    expect(productionMigration).toContain("on conflict (lower(email), city) where deleted_at is null do nothing");
+    expect(productionMigration).toContain("'operations', true");
+    expect(productionMigration).toContain("'marketing', coalesce");
+    expect(productionMigration).toContain("grant execute on function public.submit_public_lead(jsonb, text, text, text) to service_role;");
+  });
+
+  it("creates profiles for invited Auth users without assigning a role", () => {
+    expect(productionMigration).toContain("create trigger on_auth_user_created");
+    expect(productionMigration).toContain("insert into public.profiles");
+    expect(productionMigration).not.toContain("insert into public.profile_roles");
+  });
+
+  it("pairs RLS with explicit least-privilege application grants", () => {
+    expect(privilegeMigration).toContain("grant usage on schema public to anon, authenticated, service_role;");
+    expect(privilegeMigration).toContain("public.profile_roles");
+    expect(privilegeMigration).toContain("to service_role;");
+    expect(privilegeMigration).toContain("grant insert on table public.consent_records to authenticated;");
+    expect(privilegeMigration).not.toContain("grant all");
+  });
+
+  it("provisions captain registration through a locked service-only transaction", () => {
+    expect(captainInvitationMigration).toContain("create or replace function public.provision_captain_invitation(");
+    expect(captainInvitationMigration).toContain("pg_catalog.pg_advisory_xact_lock");
+    expect(captainInvitationMigration).toContain("on conflict (profile_id, role) do nothing");
+    expect(captainInvitationMigration).toContain("on conflict on constraint registrations_team_id_key do update");
+    expect(captainInvitationMigration).toContain("revoke all on function public.provision_captain_invitation");
+    expect(captainInvitationMigration).toContain("grant execute on function public.provision_captain_invitation(uuid, uuid, text, text, uuid) to service_role;");
+    expect(captainInvitationMigration).not.toContain("grant execute on function public.provision_captain_invitation(uuid, uuid, text, text, uuid) to authenticated;");
+  });
+
+  it("publishes the production tournament and restores its supported cities", () => {
+    expect(productionReferenceDataMigration).toContain("on conflict (name, edition) do update");
+    expect(productionReferenceDataMigration).toContain("published = true");
+    expect(productionReferenceDataMigration).toContain("('Bangalore'), ('Chennai'), ('Hyderabad'), ('Pune')");
+    expect(productionReferenceDataMigration).toContain("on conflict (tournament_id, city) do update");
+  });
+
+  it("targets the registration uniqueness constraint without a PL/pgSQL name conflict", () => {
+    expect(captainInvitationMigration).toContain("on conflict on constraint registrations_team_id_key do update");
+    expect(captainUpsertFixMigration).toContain("on conflict on constraint registrations_team_id_key do update");
+    expect(captainUpsertFixMigration).toContain("revoke all on function public.provision_captain_invitation");
+  });
+});

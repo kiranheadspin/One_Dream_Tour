@@ -1,0 +1,3 @@
+import { FileLock2 } from "lucide-react";
+
+export default function DocumentsPage(){return <div className="mx-auto max-w-4xl"><p className="eyebrow text-[#8d672c]">Registration documents</p><h1 className="mt-2 text-4xl text-[#081326]">No documents requested.</h1><section className="mt-8 border bg-white p-8"><FileLock2 aria-hidden="true" className="size-8 text-[#313999]"/><h2 className="mt-5 text-2xl text-[#081326]">Uploads open only when verified</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">Document requirements have not been published. If they are required, this page will accept validated file types and sizes into private storage, then use short-lived signed links after checking team ownership.</p></section></div>}

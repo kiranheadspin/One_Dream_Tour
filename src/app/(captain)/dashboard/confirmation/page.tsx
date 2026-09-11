@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { CheckCircle2, Clock3 } from "lucide-react";
+import { requireRole } from "@/lib/auth";
+import { getCaptainTeam } from "@/lib/teams";
+
+export default async function ConfirmationPage(){const session=await requireRole("captain");const team=await getCaptainTeam(session.userId);const complete=team.paymentStatus==="Paid";return <div className="mx-auto max-w-3xl text-center"><span className={`mx-auto grid size-16 place-items-center rounded-full ${complete?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{complete?<CheckCircle2 aria-hidden="true" className="size-8"/>:<Clock3 aria-hidden="true" className="size-8"/>}</span><p className="eyebrow mt-7 text-[#8d672c]">Registration confirmation</p><h1 className="mt-3 text-4xl text-[#081326]">{complete?"Your team is registered.":"Registration is still in progress."}</h1><p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600">{complete?`${team.name} is recorded as registered. Exact city date and venue will appear after verified publication.`:"Complete the remaining captain steps. A public enquiry or draft profile does not constitute a confirmed slot."}</p><Link href="/dashboard" className="mt-8 inline-flex rounded-md bg-[#313999] px-5 py-3 text-sm font-bold text-white">Return to overview</Link></div>}

@@ -1,0 +1,12 @@
+import { randomUUID } from "node:crypto";
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { isDemoMode } from "@/lib/env";
+import { createDemoPayment } from "@/lib/demo-store";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { razorpayProvider } from "@/lib/payments";
+import { TOURNAMENT } from "@/lib/constants";
+
+export const runtime="nodejs";
+
+export async function POST(request:Request){const session=await getSession();if(!session||session.role!=="captain")return NextResponse.json({error:"Unauthorized"},{status:401});const key=request.headers.get("idempotency-key");if(!key||key.length>100)return NextResponse.json({error:"A valid idempotency key is required."},{status:422});if(isDemoMode){const payment=await createDemoPayment(key);return NextResponse.json({paymentId:payment.id,orderId:payment.orderId,amountPaise:payment.amountPaise,demo:true});}const supabase=createSupabaseAdminClient();const {data:team}=await supabase.from("teams").select("id,rules_accepted_at,registrations(id)").eq("captain_profile_id",session.userId).is("deleted_at",null).single();if(!team||!team.rules_accepted_at)return NextResponse.json({error:"Complete rules acceptance first."},{status:409});const {data:settings}=await supabase.from("app_settings").select("value").eq("key","payments_enabled").maybeSingle();if(settings?.value!==true)return NextResponse.json({error:"Payment is not enabled until commercial terms are published."},{status:409});const registration=Array.isArray(team.registrations)?team.registrations[0]:team.registrations;if(!registration)return NextResponse.json({error:"Registration invitation not found."},{status:404});const {data:existing}=await supabase.from("payments").select("*").eq("idempotency_key",key).maybeSingle();if(existing)return NextResponse.json({paymentId:existing.id,orderId:existing.provider_order_id,amountPaise:existing.amount_paise});const order=await razorpayProvider.createOrder({amountPaise:TOURNAMENT.feePaise,receipt:`odc-${randomUUID().slice(0,18)}`,notes:{team_id:team.id}});const {data:payment,error}=await supabase.from("payments").insert({registration_id:registration.id,provider_order_id:order.providerOrderId,amount_paise:order.amountPaise,status:"created",idempotency_key:key}).select("id").single();if(error)return NextResponse.json({error:"Payment record could not be created."},{status:500});return NextResponse.json({paymentId:payment.id,orderId:order.providerOrderId,amountPaise:order.amountPaise,keyId:process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID});}

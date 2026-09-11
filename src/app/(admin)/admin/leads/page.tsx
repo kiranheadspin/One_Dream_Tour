@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { Download } from "lucide-react";
+import { listLeads } from "@/lib/leads";
+import { TOURNAMENT, LEAD_STAGES } from "@/lib/constants";
+import { AdminHeading } from "@/components/admin/admin-heading";
+import { LeadTable } from "@/components/admin/lead-table";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+
+export default async function LeadsPage({searchParams}:{searchParams:Promise<{q?:string;city?:string;stage?:string}>}){const filters=await searchParams;const q=(filters.q??"").toLowerCase();const all=await listLeads();const leads=all.filter(lead=>(!q||`${lead.captainName} ${lead.company} ${lead.email} ${lead.reference}`.toLowerCase().includes(q))&&(!filters.city||lead.city===filters.city)&&(!filters.stage||lead.stage===filters.stage));return <div className="mx-auto max-w-7xl"><AdminHeading eyebrow="CRM" title="Leads" description={`${leads.length} of ${all.length} enquiries shown`} action={<Link href="/api/admin/leads/export" className="inline-flex h-10 items-center gap-2 rounded-md border bg-white px-4 text-sm font-semibold"><Download aria-hidden="true" className="size-4"/>Export CSV</Link>}/><form className="mt-7 grid gap-3 border bg-white p-4 sm:grid-cols-[1fr_180px_220px_auto]"><Input name="q" defaultValue={filters.q} placeholder="Search captain, company, email or reference" className="h-10"/><NativeSelect name="city" defaultValue={filters.city} className="w-full"><NativeSelectOption value="">All cities</NativeSelectOption>{TOURNAMENT.cities.map(city=><NativeSelectOption key={city} value={city}>{city}</NativeSelectOption>)}</NativeSelect><NativeSelect name="stage" defaultValue={filters.stage} className="w-full"><NativeSelectOption value="">All stages</NativeSelectOption>{LEAD_STAGES.map(stage=><NativeSelectOption key={stage} value={stage}>{stage}</NativeSelectOption>)}</NativeSelect><button type="submit" className="h-10 rounded-md bg-[#081326] px-5 text-sm font-bold text-white">Filter</button></form><div className="mt-4"><LeadTable leads={leads}/></div></div>}
