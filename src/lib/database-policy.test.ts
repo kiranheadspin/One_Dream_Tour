@@ -11,6 +11,7 @@ const captainInvitationMigration = readFileSync(path.join(process.cwd(), "supaba
 const productionReferenceDataMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020007_production_reference_data.sql"), "utf8");
 const captainUpsertFixMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020008_fix_captain_registration_upsert.sql"), "utf8");
 const passwordAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120001_password_access.sql"), "utf8");
+const captainCompanyAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120002_captain_company_access.sql"), "utf8");
 
 describe("database security migration", () => {
   it.each(["leads", "teams", "team_members", "payments", "payment_events", "consent_records", "audit_logs"])("enables RLS for %s", (table) => {
@@ -107,5 +108,12 @@ describe("database security migration", () => {
     expect(captainAccess).toContain(
       "profiles!captain_activation_tokens_profile_id_fkey(username,full_name)",
     );
+  });
+
+  it("lets captains read only the company linked to their active team", () => {
+    expect(captainCompanyAccessMigration).toContain("create policy companies_linked_captain_select");
+    expect(captainCompanyAccessMigration).toContain("teams.company_id = companies.id");
+    expect(captainCompanyAccessMigration).toContain("teams.captain_profile_id = (select auth.uid())");
+    expect(captainCompanyAccessMigration).toContain("teams.deleted_at is null");
   });
 });
