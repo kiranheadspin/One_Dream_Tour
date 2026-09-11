@@ -12,14 +12,14 @@ export function SiteFooter() {
         </div>
         <div>
           <p className="eyebrow text-[#d7aa54]">Explore</p>
-          <div className="mt-5 grid gap-3 text-sm text-white/65">
-            <Link href="/tournament">Tournament</Link><Link href="/cities">Cities</Link><Link href="/sponsors">Sponsors</Link><Link href="/corporate-events">Corporate events</Link>
+          <div className="mt-4 grid text-sm text-white/65">
+            <Link className="flex min-h-11 items-center" href="/tournament">Tournament</Link><Link className="flex min-h-11 items-center" href="/cities">Cities</Link><Link className="flex min-h-11 items-center" href="/sponsors">Sponsors</Link><Link className="flex min-h-11 items-center" href="/corporate-events">Corporate events</Link>
           </div>
         </div>
         <div>
           <p className="eyebrow text-[#d7aa54]">Support</p>
-          <div className="mt-5 grid gap-3 text-sm text-white/65">
-            <a href={whatsappUrl("Hello One Dream Cup team")}>WhatsApp +91 {TOURNAMENT.whatsapp}</a><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/refund-policy">Refund policy</Link>
+          <div className="mt-4 grid text-sm text-white/65">
+            <a className="flex min-h-11 items-center" href={whatsappUrl("Hello One Dream Cup team")}>WhatsApp +91 {TOURNAMENT.whatsapp}</a><Link className="flex min-h-11 items-center" href="/contact">Contact</Link><Link className="flex min-h-11 items-center" href="/privacy">Privacy</Link><Link className="flex min-h-11 items-center" href="/terms">Terms</Link><Link className="flex min-h-11 items-center" href="/refund-policy">Refund policy</Link>
           </div>
         </div>
       </div>

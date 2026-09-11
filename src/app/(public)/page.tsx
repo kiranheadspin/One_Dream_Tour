@@ -37,20 +37,20 @@ export default function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <section className="relative isolate min-h-[760px] overflow-hidden bg-[#081326] text-white">
+      <section className="relative isolate min-h-[690px] overflow-hidden bg-[#081326] text-white sm:min-h-[760px]">
         <Image src="/images/one-dream-cup-hero.png" alt="Corporate cricket player ready to bat under stadium lights" fill priority sizes="100vw" className="-z-20 object-cover object-[68%_center] opacity-90" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(5,16,31,.98)_0%,rgba(5,16,31,.93)_43%,rgba(5,16,31,.34)_68%,rgba(5,16,31,.05)_100%)] max-md:bg-[#081326]/76" />
-        <div className="container-shell flex min-h-[760px] items-center pt-28 sm:pt-32">
-          <div className="w-full max-w-[650px] py-10 sm:py-16">
-            <h1 className="text-5xl leading-none font-bold tracking-[-0.03em] text-[#d7aa54] uppercase sm:text-7xl lg:text-[5.5rem]">One Dream Cup</h1>
+        <div className="container-shell flex min-h-[690px] items-center pt-20 sm:min-h-[760px] sm:pt-32">
+          <div className="w-full max-w-[650px] py-8 sm:py-16">
+            <h1 className="text-[clamp(2.75rem,14vw,4.5rem)] leading-none font-bold tracking-[-0.03em] text-[#d7aa54] uppercase lg:text-[5.5rem]">One Dream Cup</h1>
             <p className="mt-2 font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">{TOURNAMENT.edition}</p>
             <p className="mt-5 text-lg font-semibold text-white sm:mt-7 sm:text-xl">Pure corporate tennis-ball cricket tournament</p>
-            <p className="mt-3 text-sm font-bold tracking-wide text-[#e6c27d] sm:text-base">Bangalore <span className="mx-2 text-white/35">•</span> Chennai <span className="mx-2 text-white/35">•</span> Hyderabad <span className="mx-2 text-white/35">•</span> Pune</p>
+            <p className="mt-3 text-sm leading-6 font-bold tracking-wide text-[#e6c27d] sm:text-base">Bangalore <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Chennai <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Hyderabad <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Pune</p>
             <div className="mt-5 grid gap-3 text-sm text-white/75 sm:mt-7 sm:grid-cols-2">
               <p className="flex items-center gap-3"><CalendarDays aria-hidden="true" className="size-5 text-[#d7aa54]" />September—December 2026</p>
               <p className="flex items-center gap-3"><Trophy aria-hidden="true" className="size-5 text-[#d7aa54]" />Two teams per city advance to Goa</p>
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-7">
+            <div className="mt-5 grid grid-cols-2 gap-3 max-[359px]:grid-cols-1 sm:mt-7">
               <div className="border border-[#d7aa54]/65 bg-[#081326]/70 p-3 sm:p-4"><p className="font-heading text-2xl text-[#d7aa54] sm:text-3xl">{formatInr(TOURNAMENT.feePaise)}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-white/55 sm:text-xs">Team entry fee</p></div>
               <div data-testid="hero-prize-pool" className="border border-[#d7aa54]/65 bg-[#081326]/70 p-3 sm:p-4"><p className="font-heading text-2xl text-[#d7aa54] sm:text-3xl">{formatInr(TOURNAMENT.prizePoolPaise)}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-white/55 sm:text-xs">Total prize pool</p></div>
             </div>
@@ -76,7 +76,7 @@ export default function HomePage() {
         <div className="container-shell">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="eyebrow text-[#8d672c]">Four city leagues</p><h2 className="mt-4 text-4xl text-[#081326] sm:text-5xl">Choose your home ground.</h2></div><Link href="/cities" className="inline-flex items-center gap-2 text-sm font-bold text-[#313999]">Explore all cities <ArrowRight aria-hidden="true" className="size-4" /></Link></div>
           <div className="mt-10 grid border-y border-slate-200 md:grid-cols-2">
-            {cities.map((city,index)=><Link href={`/cities/${city.name.toLowerCase()}`} key={city.name} className={`group flex min-h-48 items-end justify-between border-slate-200 p-7 transition-colors hover:bg-[#081326] hover:text-white ${index%2===0?'md:border-r':''} ${index<2?'border-b':''}`}><div><span className="text-xs font-bold tracking-[0.2em] text-[#8d672c] group-hover:text-[#d7aa54]">{city.code}</span><h3 className="mt-3 text-3xl">{city.name}</h3><p className="mt-3 text-sm text-slate-500 group-hover:text-white/60">{city.note}</p></div><ArrowRight aria-hidden="true" className="size-5 text-[#4048b5] group-hover:text-[#d7aa54]"/></Link>)}
+            {cities.map((city,index)=><Link href={`/cities/${city.name.toLowerCase()}`} key={city.name} className={`group flex min-h-44 items-end justify-between border-b border-slate-200 p-6 transition-colors last:border-b-0 hover:bg-[#081326] hover:text-white sm:min-h-48 sm:p-7 ${index%2===0?'md:border-r':''} ${index<2?'md:border-b':''}`}><div><span className="text-xs font-bold tracking-[0.2em] text-[#8d672c] group-hover:text-[#d7aa54]">{city.code}</span><h3 className="mt-3 text-3xl">{city.name}</h3><p className="mt-3 text-sm text-slate-500 group-hover:text-white/60">{city.note}</p></div><ArrowRight aria-hidden="true" className="size-5 text-[#4048b5] group-hover:text-[#d7aa54]"/></Link>)}
           </div>
         </div>
       </section>
@@ -108,7 +108,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-white py-20">
-        <div className="container-shell border border-slate-200 p-8 sm:p-12">
+        <div className="container-shell border border-slate-200 p-6 sm:p-12">
           <div className="grid gap-9 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="eyebrow text-[#8d672c]">Ready to step up?</p><h2 className="mt-3 text-balance text-4xl text-[#081326]">Start with a short team enquiry.</h2><ul className="mt-6 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">{['No player roster yet','Takes about 4 minutes','No payment at enquiry'].map(item=><li key={item} className="flex items-center gap-2"><Check aria-hidden="true" className="size-4 text-[#4048b5]"/>{item}</li>)}</ul></div><RegisterInterestLink /></div>
         </div>
       </section>

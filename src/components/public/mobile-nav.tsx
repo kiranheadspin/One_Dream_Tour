@@ -17,10 +17,10 @@ const links = [
 export function MobileNav() {
   return (
     <Sheet>
-      <SheetTrigger aria-label="Open navigation" className="inline-flex size-10 items-center justify-center rounded-md border border-white/20 text-white md:hidden">
+      <SheetTrigger aria-label="Open navigation" className="inline-flex size-11 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white lg:hidden">
         <Menu aria-hidden="true" className="size-5" />
       </SheetTrigger>
-      <SheetContent className="bg-[#081326] text-white" side="right">
+      <SheetContent className="w-[min(88vw,23rem)] border-white/10 bg-[#081326] text-white" side="right">
         <SheetHeader className="border-b border-white/10 p-6">
           <SheetTitle className="text-xl text-white">One Dream Cup</SheetTitle>
           <SheetDescription className="text-white/60">50th Special Edition</SheetDescription>
@@ -33,7 +33,7 @@ export function MobileNav() {
               <Link
                 key={href}
                 href={href}
-                className="rounded-md px-4 py-3 text-base text-white/80 hover:bg-white/10 hover:text-white"
+                className="flex min-h-12 items-center rounded-md px-4 py-3 text-base text-white/80 hover:bg-white/10 hover:text-white"
               >
                 {label}
               </Link>
