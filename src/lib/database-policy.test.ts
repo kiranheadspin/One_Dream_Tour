@@ -101,4 +101,11 @@ describe("database security migration", () => {
     expect(passwordAccessMigration).toContain("revoke update on table public.profiles from authenticated;");
     expect(passwordAccessMigration).toContain("grant update (full_name, phone, updated_at) on table public.profiles to authenticated;");
   });
+
+  it("uses the captain profile foreign key explicitly for activation lookups", () => {
+    const captainAccess = readFileSync(path.join(process.cwd(), "src/lib/captain-access.ts"), "utf8");
+    expect(captainAccess).toContain(
+      "profiles!captain_activation_tokens_profile_id_fkey(username,full_name)",
+    );
+  });
 });

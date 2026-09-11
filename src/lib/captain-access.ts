@@ -210,7 +210,7 @@ export async function getCaptainActivation(token: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("captain_activation_tokens")
-    .select("id,expires_at,used_at,profiles!inner(username,full_name)")
+    .select("id,expires_at,used_at,profiles!captain_activation_tokens_profile_id_fkey(username,full_name)")
     .eq("token_hash", tokenHash(token))
     .maybeSingle();
   if (error || !data || data.used_at || new Date(data.expires_at) <= new Date()) return null;
