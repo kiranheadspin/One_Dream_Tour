@@ -9,5 +9,7 @@ For a connected local Supabase stack, apply the migration and additionally verif
 3. An anonymous client cannot select leads or insert payment/audit events.
 4. An administrator can list and update leads through the authenticated role policy.
 5. Application roles cannot update or delete consent, webhook or audit events.
+6. Anonymous and authenticated application clients cannot read captain activation token hashes.
+7. Captain usernames remain unique under case-insensitive concurrent inserts.
 
 These connected checks require project credentials and are intentionally not faked in the credential-free demo suite.

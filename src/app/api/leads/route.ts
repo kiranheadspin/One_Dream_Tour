@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { after } from "next/server";
 import { leadSchema } from "@/lib/validation";
 import { createLead } from "@/lib/leads";
 import { checkRateLimit, getClientAddress, hashPrivateValue } from "@/lib/rate-limit";
-import { notifications } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const clientAddress = getClientAddress(request.headers);
@@ -31,15 +29,6 @@ export async function POST(request: Request) {
       ipHash: hashPrivateValue("consent-ip", clientAddress),
       userAgentHash: hashPrivateValue("consent-user-agent", request.headers.get("user-agent") ?? "unknown"),
     });
-    if (!duplicate) {
-      after(async () => {
-        try {
-          await notifications.sendLeadSubmission(lead);
-        } catch {
-          console.error(`Lead notifications failed for reference ${lead.reference}.`);
-        }
-      });
-    }
     return NextResponse.json(
       { reference: lead.reference, duplicate },
       { status: duplicate ? 200 : 201, headers: { "cache-control": "no-store" } },

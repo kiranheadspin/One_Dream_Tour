@@ -33,7 +33,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
                 </div>
               ))}
             </div>
-            <p className="mt-8 text-sm leading-6 text-slate-600">Questions? Email <a className="font-semibold text-[#313999] underline underline-offset-4" href="mailto:antony@onedream.in">antony@onedream.in</a> or WhatsApp 9591011861.</p>
+            <p className="mt-8 text-sm leading-6 text-slate-600">Questions? Contact the operations team on WhatsApp at 9591011861.</p>
           </aside>
           <div className="bg-white p-6 shadow-sm sm:p-10"><LeadForm attribution={attribution} /></div>
         </div>

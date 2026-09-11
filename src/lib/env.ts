@@ -13,10 +13,6 @@ const schema = z.object({
   PAYMENT_UPI_ID: z.string().trim().optional(),
   PAYMENT_UPI_PAYEE_NAME: z.string().trim().optional(),
   PAYMENT_UPI_PHONE: z.string().trim().optional(),
-  RESEND_API_KEY: z.string().min(10).optional().or(z.literal("")),
-  NOTIFICATION_FROM_EMAIL: z.string().email().optional().or(z.literal("")),
-  ADMIN_NOTIFICATION_EMAIL: z.string().email().optional().or(z.literal("")),
-  NOTIFICATION_REPLY_TO_EMAIL: z.string().email().optional().or(z.literal("")),
   REQUEST_HASH_SECRET: z.string().min(32).optional().or(z.literal("")),
   BOT_VERIFICATION_SECRET: z.string().optional(),
 });
@@ -45,9 +41,6 @@ if (!isDemoMode) {
     ["NEXT_PUBLIC_SUPABASE_URL", env.NEXT_PUBLIC_SUPABASE_URL],
     ["NEXT_PUBLIC_SUPABASE_ANON_KEY", env.NEXT_PUBLIC_SUPABASE_ANON_KEY],
     ["SUPABASE_SERVICE_ROLE_KEY", env.SUPABASE_SERVICE_ROLE_KEY],
-    ["RESEND_API_KEY", env.RESEND_API_KEY],
-    ["NOTIFICATION_FROM_EMAIL", env.NOTIFICATION_FROM_EMAIL],
-    ["ADMIN_NOTIFICATION_EMAIL", env.ADMIN_NOTIFICATION_EMAIL],
     ["REQUEST_HASH_SECRET", env.REQUEST_HASH_SECRET],
   ].filter(([, value]) => !value).map(([name]) => name);
   if (missing.length) throw new Error(`Missing production environment variables: ${missing.join(", ")}.`);

@@ -37,7 +37,7 @@ export function AppShell({ session, children }: { session: AppSession; children:
           {links.map(([label,href,Icon])=><Link key={href} href={href} className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/65 hover:bg-white/10 hover:text-white"><Icon aria-hidden="true" className="size-4"/>{label}</Link>)}
         </nav>
         <div className="mt-auto border-t border-white/10 p-4">
-          <div className="flex items-center gap-3 px-2 py-3"><span className="grid size-9 place-items-center rounded-full bg-white/10"><UserRound aria-hidden="true" className="size-4"/></span><div className="min-w-0"><p className="truncate text-sm font-semibold">{session.name}</p><p className="truncate text-xs text-white/45">{session.email}</p></div></div>
+          <div className="flex items-center gap-3 px-2 py-3"><span className="grid size-9 place-items-center rounded-full bg-white/10"><UserRound aria-hidden="true" className="size-4"/></span><div className="min-w-0"><p className="truncate text-sm font-semibold">{session.name}</p><p className="truncate text-xs text-white/45">{session.loginIdentifier}</p></div></div>
           <form action="/api/auth/sign-out" method="post"><button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-xs text-white/55 hover:bg-white/10 hover:text-white" type="submit"><LogOut aria-hidden="true" className="size-4"/>Sign out</button></form>
         </div>
       </aside>

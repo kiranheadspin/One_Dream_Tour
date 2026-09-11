@@ -2,14 +2,14 @@
 
 Production-oriented tournament marketing, lead CRM, captain registration and payment operations for the One Dream Cup 50th Special Edition.
 
-The app uses a premium dark-navy/gold public identity and warm, structured operational dashboards. It runs credential-free in an explicitly labelled demo mode and switches to Supabase, organizer-configured UPI collection and Resend when production configuration is supplied.
+The app uses a premium dark-navy/gold public identity and warm, structured operational dashboards. It runs credential-free in an explicitly labelled demo mode and switches to Supabase and organizer-configured UPI collection when production configuration is supplied.
 
 ## Architecture
 
 ```text
 Public site → validated lead API → demo store or Supabase → admin CRM
                                         ↓
-Passwordless auth → captain-owned team → rules → UPI payment → admin confirmation → receipt
+Password auth → captain-owned team → rules → UPI payment → admin confirmation → receipt
                                         ↓
                               consent + audit history
 ```
@@ -20,7 +20,7 @@ Passwordless auth → captain-owned team → rules → UPI payment → admin con
 - Supabase PostgreSQL, Auth, RLS and private Storage architecture
 - Manual UPI QR/app intent, captain review request and organizer receipt confirmation
 - Reserved Razorpay server order, HMAC and webhook layer for a future provider-backed checkout
-- Resend submitter receipts and organizer alerts with idempotent delivery
+- Admin-created captain usernames with one-time WhatsApp activation links
 - File-backed, `0600` demo store in `.data/` for local evaluation only
 - Provider abstractions for analytics, notification and payment integrations
 
@@ -79,7 +79,7 @@ Go to `/login`, then choose:
 - **Preview captain portal** for team, player, rules, preferences and manual UPI-review workflows
 - **Preview admin CRM** for leads, follow-ups, exports, teams, payments, content and reports
 
-Demo mode is always labelled, uses non-payable UPI details and never contacts Razorpay or Resend. Delete `.data/one-dream-cup-demo.json` to regenerate pristine sample data on the next request.
+Demo mode is always labelled, uses non-payable UPI details and never contacts Razorpay. Delete `.data/one-dream-cup-demo.json` to regenerate pristine sample data on the next request.
 
 ## Environment variables
 
@@ -98,14 +98,10 @@ See [.env.example](/Users/kirandn/Documents/One%20Dream%20Group/.env.example).
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Browser-safe Razorpay key ID |
 | `RAZORPAY_KEY_SECRET` | Server-only order and payment-signature secret |
 | `RAZORPAY_WEBHOOK_SECRET` | Independent webhook signing secret |
-| `RESEND_API_KEY` | Transactional email provider |
-| `NOTIFICATION_FROM_EMAIL` | Verified sender address |
-| `ADMIN_NOTIFICATION_EMAIL` | Organizer notification recipient |
-| `NOTIFICATION_REPLY_TO_EMAIL` | Optional monitored reply-to address |
 | `REQUEST_HASH_SECRET` | Key for privacy-preserving shared rate limits and consent evidence |
 | `BOT_VERIFICATION_SECRET` | Optional server bot-verification integration point |
 
-Environment validation fails with a clear message when production mode lacks required Supabase, Resend or request-protection values, or uses a non-HTTPS canonical URL.
+Environment validation fails with a clear message when production mode lacks required Supabase or request-protection values, or uses a non-HTTPS canonical URL.
 
 ## Supabase setup
 
@@ -115,12 +111,12 @@ Environment validation fails with a clear message when production mode lacks req
 4. Create a private Storage bucket named `team-documents`.
 5. Use signed, short-lived document URLs only after checking team ownership.
 6. Run the connected policy cases documented in `tests/database/README.md`.
-7. Configure Supabase Auth email delivery through the verified Resend domain.
+7. Keep public sign-up and Auth email delivery disabled.
 8. Set production environment variables, then change `NEXT_PUBLIC_DEMO_MODE=false`.
 
 ### Create an administrator
 
-Invite the user in Supabase Auth. The database trigger creates its profile; copy the UUID, then assign the approved role:
+Create each approved administrator in Supabase Auth with a confirmed email and strong password. The database trigger creates its profile; copy the UUID, then assign the approved role:
 
 ```sql
 insert into public.profile_roles (profile_id, role)
@@ -128,7 +124,7 @@ values ('AUTH_USER_UUID', 'admin')
 on conflict do nothing;
 ```
 
-Use `captain` instead of `admin` only for invited captain accounts. Do not assign roles from browser input.
+Do not share one administrator identity between staff. Captain identities are provisioned from the admin CRM and roles are never assigned from public browser input.
 
 ## Manual UPI setup
 
@@ -154,7 +150,7 @@ The server never trusts client-side success. It verifies `order_id|payment_id`, 
 
 Recommended target: Vercel with Supabase hosted PostgreSQL.
 
-Follow [PRODUCTION_SETUP.md](/Users/kirandn/Documents/One%20Dream%20Group/PRODUCTION_SETUP.md) for the fail-closed environment, Auth redirect, Resend, staging and operating runbook.
+Follow [PRODUCTION_SETUP.md](/Users/kirandn/Documents/One%20Dream%20Group/PRODUCTION_SETUP.md) for the fail-closed environment, password authentication, staging and operating runbook.
 
 ```bash
 npm run verify
@@ -173,8 +169,8 @@ Demo file persistence is for local preview only and is not suitable for serverle
 - [x] Zod validation and safe error responses
 - [x] Shared Supabase rate limiting, race-safe duplicate detection and honeypot
 - [x] Atomic lead and consent persistence
-- [x] Invite-only passwordless Auth with session refresh and safe role redirects
-- [x] Idempotent Resend submitter and organizer notifications
+- [x] Invite-only password Auth with session refresh and safe role redirects
+- [x] One-time, hashed captain activation links prepared for WhatsApp sharing
 - [x] Separate required operational and optional marketing consent
 - [x] Append-only consent, payment-event and audit evidence
 - [x] Server-only provider secrets and environment validation
@@ -242,7 +238,7 @@ Playwright covers verified public facts, public lead creation and CRM stage move
 - [ ] Private Storage bucket and signed URL expiry verified
 - [ ] Organizer UPI details, QR/app intent, admin reconciliation, refunds and receipts verified
 - [ ] Razorpay test mode, signatures and webhooks verified before any future activation
-- [ ] Resend sender/domain and transactional templates approved
+- [ ] Administrator identities and password custody approved
 - [ ] Canonical URL, OG image, sitemap, robots and auth redirect allow-list verified
 - [x] Rate limiting moved to shared Supabase infrastructure
 - [ ] Accessibility, privacy, security and mobile regression pass completed

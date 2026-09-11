@@ -5,8 +5,6 @@ import { isDemoMode } from "@/lib/env";
 import { safeRelativePath } from "@/lib/auth-redirects";
 
 const LOGIN_ERRORS: Record<string, string> = {
-  "missing-code": "This sign-in link is incomplete. Request a new link.",
-  "invalid-link": "This sign-in link is invalid or expired. Request a new link.",
   "not-authorized": "This account has not been assigned access. Contact the tournament organizer.",
   "temporarily-unavailable": "Sign-in is temporarily unavailable. Please try again shortly.",
 };

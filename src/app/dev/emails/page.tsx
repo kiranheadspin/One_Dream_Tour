@@ -1,6 +1,0 @@
-import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import { isDemoMode } from "@/lib/env";
-import { readDemoDatabase } from "@/lib/demo-store";
-
-export default async function EmailPreviewPage(){if(!isDemoMode)notFound();await requireRole("admin");const lead=(await readDemoDatabase()).leads[0];return <main className="min-h-screen bg-slate-100 p-6 sm:p-12"><div className="mx-auto max-w-2xl"><p className="eyebrow text-[#8d672c]">Development only</p><h1 className="mt-2 text-4xl text-[#081326]">Email preview</h1><div className="mt-7 border bg-white p-8"><p className="text-xs text-slate-500">Subject: One Dream Cup enquiry {lead.reference}</p><h2 className="mt-7 text-3xl text-[#081326]">We received your team enquiry.</h2><p className="mt-5 text-sm leading-7 text-slate-600">Hello {lead.displayName},</p><p className="mt-3 text-sm leading-7 text-slate-600">We received your One Dream Cup enquiry for {lead.company}. Your reference is <b>{lead.reference}</b>. Our operations team will contact you about eligibility, availability and next steps.</p><p className="mt-3 text-sm leading-7 text-slate-600">No slot or payment has been confirmed at this stage.</p></div></div></main>}

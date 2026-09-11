@@ -77,8 +77,7 @@ Concept images are design references. Real navigation, copy, controls, forms, ta
 - Supabase PostgreSQL, Auth, Storage, and Row Level Security.
 - React Hook Form plus Zod for client/server validation parity.
 - Razorpay behind a payment service interface, with server order creation, signature verification, idempotent webhooks, and explicit development mock mode.
-- Resend behind a notification interface, with a safe local preview transport when credentials are absent.
-- Click-to-chat WhatsApp links through a centralized organizer-contact service; future official WhatsApp provider support remains replaceable.
+- Click-to-chat WhatsApp links for operational communication and captain activation; future official WhatsApp provider support remains replaceable.
 - Vercel-compatible deployment and environment validation.
 
 ### Runtime boundaries
@@ -92,11 +91,11 @@ Concept images are design references. Real navigation, copy, controls, forms, ta
 ### Feature structure
 
 - `app/(public)` — tournament, cities, Road to Goa, rules, FAQ, registration, corporate events, policies.
-- `app/(auth)` — passwordless sign-in, callback, invitation acceptance.
+- `app/(auth)` — password sign-in and one-time captain activation.
 - `app/(captain)` — captain-owned teams, players, documents, registration, payments, schedule, announcements, preferences.
 - `app/(admin)` — leads, companies, captains, tournaments, registrations, payments, follow-ups, communications, content, reports, settings, audit log.
 - `features/*` — feature-owned schemas, services, server actions, queries, and UI.
-- `lib/auth`, `lib/payments`, `lib/notifications`, `lib/analytics`, `lib/storage`, `lib/rate-limit` — replaceable infrastructure interfaces.
+- `lib/auth`, `lib/payments`, `lib/analytics`, `lib/storage`, `lib/rate-limit` — replaceable infrastructure interfaces.
 - `supabase/migrations`, `supabase/seed.sql`, generated database types, policy tests, and schema documentation.
 
 ## Data model direction
@@ -128,7 +127,7 @@ Every ownership-sensitive table will carry the minimum relationship needed for R
 
 1. **Foundation** — scaffold, tokens, route groups, environment validation, Supabase clients, schema/migrations, seed data, auth, roles, RLS, and app shells.
 2. **Lead MVP** — public pages, city routes, enquiry and success state, attribution, rate limiting/bot hook, consent capture, admin lead table/detail/follow-up, WhatsApp action.
-3. **Registration** — captain invitation, passwordless sign-in, company/team/player workflow, documents, rules, consent, registration status, confirmations.
+3. **Registration** — admin-created captain access, username/password sign-in, company/team/player workflow, documents, rules, consent, registration status, confirmations.
 4. **Payment** — Razorpay adapter, mock mode, order/signature/webhook flow, receipts, manual payment/refund paths, admin/captain payment views.
 5. **Retention** — preferences, future sport interests, opportunities, company history, consent withdrawal, reports, and safe exports.
 6. **Hardening and QA** — role/access tests, RLS tests, payment verification/idempotency tests, Playwright end-to-end workflows, responsive/accessibility checks, production build, and concept-to-browser visual fidelity review.

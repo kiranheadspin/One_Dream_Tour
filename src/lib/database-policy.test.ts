@@ -10,6 +10,7 @@ const privilegeMigration = readFileSync(path.join(process.cwd(), "supabase/migra
 const captainInvitationMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020006_captain_invitations.sql"), "utf8");
 const productionReferenceDataMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020007_production_reference_data.sql"), "utf8");
 const captainUpsertFixMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020008_fix_captain_registration_upsert.sql"), "utf8");
+const passwordAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120001_password_access.sql"), "utf8");
 
 describe("database security migration", () => {
   it.each(["leads", "teams", "team_members", "payments", "payment_events", "consent_records", "audit_logs"])("enables RLS for %s", (table) => {
@@ -84,5 +85,20 @@ describe("database security migration", () => {
     expect(captainInvitationMigration).toContain("on conflict on constraint registrations_team_id_key do update");
     expect(captainUpsertFixMigration).toContain("on conflict on constraint registrations_team_id_key do update");
     expect(captainUpsertFixMigration).toContain("revoke all on function public.provision_captain_invitation");
+  });
+
+  it("keeps captain activation tokens private and stores only fixed-length hashes", () => {
+    expect(passwordAccessMigration).toContain("token_hash text not null unique check (char_length(token_hash) = 64)");
+    expect(passwordAccessMigration).toContain("alter table public.captain_activation_tokens enable row level security;");
+    expect(passwordAccessMigration).toContain("revoke all on table public.captain_activation_tokens from public, anon, authenticated;");
+    expect(passwordAccessMigration).toContain("grant all on table public.captain_activation_tokens to service_role;");
+  });
+
+  it("enforces unique normalized captain usernames and removes email preferences", () => {
+    expect(passwordAccessMigration).toContain("on public.profiles (lower(username))");
+    expect(passwordAccessMigration).toContain("delete from public.communication_preferences where channel = 'email';");
+    expect(passwordAccessMigration).toContain("check (channel in ('whatsapp', 'phone'))");
+    expect(passwordAccessMigration).toContain("revoke update on table public.profiles from authenticated;");
+    expect(passwordAccessMigration).toContain("grant update (full_name, phone, updated_at) on table public.profiles to authenticated;");
   });
 });
