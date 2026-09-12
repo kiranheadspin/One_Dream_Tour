@@ -5,10 +5,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const questions = [
   ["Is this tournament only for companies?", "Yes. One Dream Cup is designed for corporate teams. Company relationship and player eligibility details are verified during registration."],
   ["Does an enquiry reserve a team slot?", "No. An enquiry starts a conversation. A slot is reserved only when the operations team explicitly confirms it."],
-  ["How many matches will we play?", "The league format guarantees at least two matches for every entered team."],
-  ["What is the match format?", "Matches are played with a tennis ball over seven overs. Detailed playing conditions and tie-break rules will be published as a versioned rules document."],
-  ["How do teams reach Goa?", "Two teams from each of Bangalore, Chennai, Hyderabad and Pune qualify for the eight-team quarter-finals in Goa."],
-  ["When and where are the matches?", "The season window is September–December 2026. Exact dates and venues have not yet been published and will never be guessed on this site."],
+  ["How many matches will we play?", "Each city competition progresses through league matches, pre-quarter-finals, quarter-finals and semi-finals."],
+  ["What is the match format?", "This is a pure corporate tennis-ball cricket tournament. Detailed playing conditions and tie-break rules will be published as a versioned rules document."],
+  ["How do teams reach Goa?", "The top two teams from each of Bangalore, Chennai, Hyderabad and Pune qualify for the eight-team quarter-finals in Goa and receive ₹10,000 each."],
+  ["When and where are the matches?", "Bangalore plays 21–22 November 2026, Pune 12–13 December 2026, Hyderabad 19–20 December 2026, and Chennai 30–31 January 2027. Venues have not yet been published."],
+  ["What is the cash prize?", "The total cash prize is ₹2,80,000: ₹1,50,000 for the winner, ₹50,000 for the runner-up, and ₹10,000 for each of the eight qualifying teams."],
   ["What is the entry fee?", "The listed team fee is ₹14,500. GST treatment, payment schedule and refund terms will be confirmed before payment."],
   ["Do I need a player roster to enquire?", "No. The public enquiry asks only for approximate team size. Player details are collected later, after a registration invitation."],
 ] as const;

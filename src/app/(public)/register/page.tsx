@@ -19,7 +19,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHero eyebrow="50th Special Edition" title="The road to Goa starts here.">
-        <p>Register your corporate cricket team for the One Dream Cup S50. Men’s tournament dates are coming soon.</p>
+        <p>Register your corporate cricket team for the One Dream Cup S50. City competitions run from 21 November 2026 to 31 January 2027.</p>
       </PageHero>
       <section className="bg-[#f7f3ea] py-12 sm:py-16">
         <div className="container-shell grid gap-10 lg:grid-cols-[0.65fr_1.35fr]">

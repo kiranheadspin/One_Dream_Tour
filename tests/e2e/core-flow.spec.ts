@@ -3,11 +3,10 @@ import { expect, test } from "@playwright/test";
 test("public page presents verified tournament facts", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "One Dream Cup" })).toBeVisible();
-  await expect(page.getByTestId("hero-prize-pool")).toContainText("₹2,50,000");
+  await expect(page.getByTestId("hero-prize-pool")).toContainText("₹2,80,000");
   await expect(page.getByTestId("prize-breakdown")).toContainText("Winner₹1,50,000");
   await expect(page.getByTestId("prize-breakdown")).toContainText("Runner-up₹50,000");
-  await expect(page.getByTestId("prize-breakdown")).toContainText("Losing semi-finalists₹10,000 each");
-  await expect(page.getByTestId("prize-breakdown")).toContainText("Losing quarter-finalists₹5,000 each");
+  await expect(page.getByTestId("prize-breakdown")).toContainText("8 qualifying teams₹10,000 each");
   await expect(page.getByRole("link", { name: /Register team interest/i })).toBeVisible();
   await expect(page.getByTestId("road-to-goa-link")).toHaveAttribute("href", "/road-to-goa");
 });
@@ -177,4 +176,34 @@ test("mobile navigation exposes primary destinations", async ({ page }, testInfo
   await expect(page.getByTestId("mobile-road-to-goa-link")).toBeVisible();
   await expect(page.getByRole("link", { name: "Captain login" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Corporate Events" })).toBeVisible();
+});
+
+test("captain mobile dashboard navigation closes after changing routes", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Mobile-only dashboard navigation contract.");
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview captain portal/i }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  await page.getByLabel("Open workspace navigation").click();
+  const navigation = page.getByRole("dialog", { name: "Captain portal" });
+  await expect(navigation.getByRole("link", { name: "Public site" })).toHaveAttribute("href", "/");
+  await navigation.getByRole("link", { name: "Rules" }).click();
+
+  await expect(page).toHaveURL(/\/dashboard\/rules/);
+  await expect(navigation).toBeHidden();
+});
+
+test("admin mobile dashboard navigation closes after changing routes", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Mobile-only dashboard navigation contract.");
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview admin CRM/i }).click();
+  await expect(page).toHaveURL(/\/admin/);
+
+  await page.getByLabel("Open workspace navigation").click();
+  const navigation = page.getByRole("dialog", { name: "Tournament CRM" });
+  await expect(navigation.getByRole("link", { name: "Public site" })).toHaveAttribute("href", "/");
+  await navigation.getByRole("link", { name: "Leads" }).click();
+
+  await expect(page).toHaveURL(/\/admin\/leads/);
+  await expect(navigation).toBeHidden();
 });

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Building2, CalendarDays, Check, ShieldCheck, Trophy, Users } from "lucide-react";
 import { RegisterInterestLink } from "@/components/public/register-interest-link";
-import { TOURNAMENT, formatInr, whatsappUrl } from "@/lib/constants";
+import { CITY_SCHEDULE, TOURNAMENT, formatInr, whatsappUrl } from "@/lib/constants";
 
 const cities = [
   { name: "Bangalore", note: "Where the league energy begins", code: "BLR" },
@@ -14,8 +14,7 @@ const cities = [
 const prizeBreakdown = [
   { label: "Winner", amountPaise: TOURNAMENT.winnerPaise },
   { label: "Runner-up", amountPaise: TOURNAMENT.runnerUpPaise },
-  { label: "Losing semi-finalists", amountPaise: TOURNAMENT.losingSemiFinalistPaise, suffix: "each" },
-  { label: "Losing quarter-finalists", amountPaise: TOURNAMENT.losingQuarterFinalistPaise, suffix: "each" },
+  { label: "8 qualifying teams", amountPaise: TOURNAMENT.qualifierAwardPaise, suffix: "each" },
 ] as const;
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -24,12 +23,13 @@ const structuredData = {
   "@type": "SportsEvent",
   name: "One Dream Cup — 50th Special Edition",
   description: "A pure corporate seven-over tennis-ball cricket tournament across Bangalore, Chennai, Hyderabad and Pune, with finals in Goa.",
-  startDate: "2026-09",
-  endDate: "2026-12",
+  startDate: "2026-11-21",
+  endDate: "2027-01-31",
   eventStatus: "https://schema.org/EventScheduled",
   eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
   organizer: { "@type": "Organization", name: "One Dream Group", url: siteUrl },
   location: TOURNAMENT.cities.map((city) => ({ "@type": "Place", name: `${city} city league` })),
+  subEvent: TOURNAMENT.cities.map((city) => ({ "@type": "SportsEvent", name: `${city} city league`, ...CITY_SCHEDULE[city] })),
   offers: { "@type": "Offer", price: "14500", priceCurrency: "INR", availability: "https://schema.org/LimitedAvailability", url: `${siteUrl}/register` },
 };
 
@@ -47,7 +47,7 @@ export default function HomePage() {
             <p className="mt-5 text-lg font-semibold text-white sm:mt-7 sm:text-xl">Pure corporate tennis-ball cricket tournament</p>
             <p className="mt-3 text-sm leading-6 font-bold tracking-wide text-[#e6c27d] sm:text-base">Bangalore <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Chennai <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Hyderabad <span className="mx-1.5 text-white/35 sm:mx-2">•</span> Pune</p>
             <div className="mt-5 grid gap-3 text-sm text-white/75 sm:mt-7 sm:grid-cols-2">
-              <p className="flex items-center gap-3"><CalendarDays aria-hidden="true" className="size-5 text-[#d7aa54]" />September—December 2026</p>
+              <p className="flex items-center gap-3"><CalendarDays aria-hidden="true" className="size-5 text-[#d7aa54]" />November 2026—January 2027</p>
               <p className="flex items-center gap-3"><Trophy aria-hidden="true" className="size-5 text-[#d7aa54]" />Two teams per city advance to Goa</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 max-[359px]:grid-cols-1 sm:mt-7">
@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
           <div><p className="eyebrow text-[#8d672c]">Built for corporate teams</p><h2 className="mt-4 text-balance text-4xl leading-tight text-[#081326] sm:text-5xl">Cricket with a purpose bigger than the scoreboard.</h2></div>
           <div className="grid gap-4 sm:grid-cols-3">
-            {[{icon:Building2,title:'Corporate only',copy:'Every team represents a company and its people.'},{icon:Users,title:'Team-first format',copy:'League matches guarantee every team time on the field.'},{icon:ShieldCheck,title:'Operationally clear',copy:'Verified rules, consent records and controlled registration.'}].map(({icon:Icon,title,copy}) => <div key={title} className="border-t-2 border-[#d7aa54] bg-white p-6 shadow-sm"><Icon aria-hidden="true" className="size-6 text-[#4048b5]"/><h3 className="mt-5 text-xl text-[#081326]">{title}</h3><p className="mt-3 text-sm leading-6 text-slate-600">{copy}</p></div>)}
+            {[{icon:Building2,title:'Corporate only',copy:'Every team represents a company and its people.'},{icon:Users,title:'Knockout journey',copy:'City competition leads through four stages to the top two.'},{icon:ShieldCheck,title:'Fair play',copy:'Professional management with discipline and fair play at its core.'}].map(({icon:Icon,title,copy}) => <div key={title} className="border-t-2 border-[#d7aa54] bg-white p-6 shadow-sm"><Icon aria-hidden="true" className="size-6 text-[#4048b5]"/><h3 className="mt-5 text-xl text-[#081326]">{title}</h3><p className="mt-3 text-sm leading-6 text-slate-600">{copy}</p></div>)}
           </div>
         </div>
       </section>
@@ -76,7 +76,7 @@ export default function HomePage() {
         <div className="container-shell">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="eyebrow text-[#8d672c]">Four city leagues</p><h2 className="mt-4 text-4xl text-[#081326] sm:text-5xl">Choose your home ground.</h2></div><Link href="/cities" className="inline-flex items-center gap-2 text-sm font-bold text-[#313999]">Explore all cities <ArrowRight aria-hidden="true" className="size-4" /></Link></div>
           <div className="mt-10 grid border-y border-slate-200 md:grid-cols-2">
-            {cities.map((city,index)=><Link href={`/cities/${city.name.toLowerCase()}`} key={city.name} className={`group flex min-h-44 items-end justify-between border-b border-slate-200 p-6 transition-colors last:border-b-0 hover:bg-[#081326] hover:text-white sm:min-h-48 sm:p-7 ${index%2===0?'md:border-r':''} ${index<2?'md:border-b':''}`}><div><span className="text-xs font-bold tracking-[0.2em] text-[#8d672c] group-hover:text-[#d7aa54]">{city.code}</span><h3 className="mt-3 text-3xl">{city.name}</h3><p className="mt-3 text-sm text-slate-500 group-hover:text-white/60">{city.note}</p></div><ArrowRight aria-hidden="true" className="size-5 text-[#4048b5] group-hover:text-[#d7aa54]"/></Link>)}
+            {cities.map((city,index)=><Link href={`/cities/${city.name.toLowerCase()}`} key={city.name} className={`group flex min-h-44 items-end justify-between border-b border-slate-200 p-6 transition-colors last:border-b-0 hover:bg-[#081326] hover:text-white sm:min-h-48 sm:p-7 ${index%2===0?'md:border-r':''} ${index<2?'md:border-b':''}`}><div><span className="text-xs font-bold tracking-[0.2em] text-[#8d672c] group-hover:text-[#d7aa54]">{city.code}</span><h3 className="mt-3 text-3xl">{city.name}</h3><p className="mt-2 text-sm font-bold text-[#8d672c] group-hover:text-[#d7aa54]">{CITY_SCHEDULE[city.name].dates}</p><p className="mt-2 text-sm text-slate-500 group-hover:text-white/60">{city.note}</p></div><ArrowRight aria-hidden="true" className="size-5 text-[#4048b5] group-hover:text-[#d7aa54]"/></Link>)}
           </div>
         </div>
       </section>
@@ -85,7 +85,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div><p className="eyebrow text-[#d7aa54]">The road to Goa</p><h2 className="mt-4 text-balance text-4xl sm:text-5xl">Eight qualifiers. One unforgettable finish.</h2><p className="mt-6 max-w-xl leading-7 text-white/65">Two teams from every city advance to the quarter-finals in Goa. Exact match dates and venues will be published only after they are confirmed.</p><Link href="/road-to-goa" className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#e6c27d]">See the tournament journey <ArrowRight aria-hidden="true" className="size-4" /></Link></div>
           <div className="border border-white/12 bg-white/5 p-7">
-            {[['City league','League stage with at least two matches per team'],['Top two qualify','Two city teams earn their Goa place'],['Goa quarter-finals','Eight teams enter the national finals'],['Champion crowned','One team takes the 50th Edition title']].map(([title,copy],index)=><div key={title} className="flex gap-4 border-b border-white/10 py-5 last:border-0"><span className="grid size-8 shrink-0 place-items-center rounded-full border border-[#d7aa54]/50 font-heading text-[#d7aa54]">{index+1}</span><div><h3 className="text-lg">{title}</h3><p className="mt-1 text-sm text-white/55">{copy}</p></div></div>)}
+            {[['City competition','League matches, pre-quarter-finals, quarter-finals and semi-finals'],['Top two qualify','Two city teams earn their Goa place and ₹10,000 each'],['Goa knockouts','Eight teams enter the quarter-finals, then semi-finals'],['Champion crowned','The final decides the 50th Edition champion']].map(([title,copy],index)=><div key={title} className="flex gap-4 border-b border-white/10 py-5 last:border-0"><span className="grid size-8 shrink-0 place-items-center rounded-full border border-[#d7aa54]/50 font-heading text-[#d7aa54]">{index+1}</span><div><h3 className="text-lg">{title}</h3><p className="mt-1 text-sm text-white/55">{copy}</p></div></div>)}
           </div>
         </div>
       </section>

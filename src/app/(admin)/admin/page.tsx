@@ -2,21 +2,20 @@ import Link from "next/link";
 import { ArrowRight, CalendarClock, IndianRupee, KeyRound, TrendingUp, Users } from "lucide-react";
 import { AdminHeading } from "@/components/admin/admin-heading";
 import { LeadTable } from "@/components/admin/lead-table";
-import { readDemoDatabase } from "@/lib/demo-store";
-import { isDemoMode } from "@/lib/env";
+import { listAdminPayments } from "@/lib/admin-data";
 import { listLeads } from "@/lib/leads";
 
 export default async function AdminDashboard() {
-  const leads = await listLeads();
+  const [leads, paymentRecords] = await Promise.all([listLeads(), listAdminPayments()]);
   const registered = leads.filter((lead) => lead.stage === "Registered").length;
   const due = leads.filter((lead) => lead.nextFollowUp && new Date(lead.nextFollowUp) <= new Date("2026-08-08")).length;
-  const payments = isDemoMode ? (await readDemoDatabase()).payments.filter((item) => item.status === "paid").length : 0;
+  const payments = paymentRecords.filter((payment) => payment.status === "paid").length;
   const accessQueue = leads.filter((lead) => !lead.captainProvisioned && !["Lost", "Archived"].includes(lead.stage)).slice(0, 4);
   const metrics = [
     { label: "Active leads", value: leads.filter((lead) => lead.stage !== "Archived" && lead.stage !== "Lost").length, icon: Users, note: "current pipeline" },
     { label: "Registered", value: registered, icon: TrendingUp, note: "teams converted" },
     { label: "Follow-ups due", value: due, icon: CalendarClock, note: "through 8 Aug" },
-    { label: "Payments recorded", value: payments, icon: IndianRupee, note: "demo workspace" },
+    { label: "Payments recorded", value: payments, icon: IndianRupee, note: "confirmed payments" },
   ];
 
   return (

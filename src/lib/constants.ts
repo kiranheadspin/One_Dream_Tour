@@ -2,16 +2,23 @@ export const TOURNAMENT = {
   name: "One Dream Cup",
   edition: "50th Special Edition",
   format: "Seven-over corporate tennis-ball cricket",
-  season: "September–December 2026",
+  season: "November 2026–January 2027",
   feePaise: 1_450_000,
-  prizePoolPaise: 25_000_000,
+  prizePoolPaise: 28_000_000,
   winnerPaise: 15_000_000,
   runnerUpPaise: 5_000_000,
-  losingSemiFinalistPaise: 1_000_000,
-  losingQuarterFinalistPaise: 500_000,
+  qualifierAwardPaise: 1_000_000,
+  qualifierCount: 8,
   whatsapp: "9591011861",
   cities: ["Bangalore", "Chennai", "Hyderabad", "Pune"] as const,
 } as const;
+
+export const CITY_SCHEDULE = {
+  Bangalore: { dates: "21 & 22 November 2026", startDate: "2026-11-21", endDate: "2026-11-22" },
+  Chennai: { dates: "30 & 31 January 2027", startDate: "2027-01-30", endDate: "2027-01-31" },
+  Hyderabad: { dates: "19 & 20 December 2026", startDate: "2026-12-19", endDate: "2026-12-20" },
+  Pune: { dates: "12 & 13 December 2026", startDate: "2026-12-12", endDate: "2026-12-13" },
+} as const satisfies Record<(typeof TOURNAMENT.cities)[number], { dates: string; startDate: string; endDate: string }>;
 
 export const PAYMENT = {
   upiId: "masterstroke.in-2@okaxis",

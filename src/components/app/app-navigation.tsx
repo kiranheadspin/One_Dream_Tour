@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   CreditCard,
   FileText,
+  Globe2,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -42,6 +43,7 @@ const captainLinks: AppLink[] = [
   ["Confirmation", "/dashboard/confirmation", Trophy],
   ["Announcements", "/dashboard/announcements", Megaphone],
   ["Preferences", "/dashboard/preferences", Settings],
+  ["Public site", "/", Globe2],
 ];
 
 const adminLinks: AppLink[] = [
@@ -52,6 +54,7 @@ const adminLinks: AppLink[] = [
   ["Reports", "/admin/reports", BarChart3],
   ["Content", "/admin/content", Megaphone],
   ["Settings", "/admin/settings", Settings],
+  ["Public site", "/", Globe2],
 ];
 
 function linksFor(role: AppRole) {
@@ -93,11 +96,12 @@ export function DesktopAppNavigation({ role }: { role: AppRole }) {
 
 export function MobileAppNavigation({ session }: { session: AppSession }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const open = openPath === pathname;
   const roleLabel = session.role === "admin" ? "Tournament CRM" : "Captain portal";
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={(nextOpen) => setOpenPath(nextOpen ? pathname : null)}>
       <SheetTrigger
         aria-label="Open workspace navigation"
         className="grid size-11 shrink-0 place-items-center rounded-lg border border-white/18 bg-white/6 text-white transition-colors hover:bg-white/12"
@@ -120,7 +124,7 @@ export function MobileAppNavigation({ session }: { session: AppSession }) {
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                onClick={() => setOpen(false)}
+                onClick={() => setOpenPath(null)}
                 className={cn(
                   "flex min-h-12 items-center gap-3 rounded-lg px-4 text-[15px] font-medium",
                   active ? "bg-[#d7aa54] text-[#081326]" : "text-white/72 hover:bg-white/8 hover:text-white",
