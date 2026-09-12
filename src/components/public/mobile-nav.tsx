@@ -14,7 +14,7 @@ const links = [
   ["Corporate Events", "/corporate-events"],
 ] as const;
 
-export function MobileNav() {
+export function MobileNav({ dashboardHref }: { dashboardHref?: string }) {
   return (
     <Sheet>
       <SheetTrigger aria-label="Open navigation" className="inline-flex size-11 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white lg:hidden">
@@ -41,7 +41,7 @@ export function MobileNav() {
           ))}
         </nav>
         <div className="mt-auto grid gap-3 p-6">
-          <Link href="/login" className="rounded-md border border-white/20 px-4 py-3 text-center font-medium">Captain login</Link>
+          <Link href={dashboardHref ?? "/login"} className="rounded-md border border-white/20 px-4 py-3 text-center font-medium">{dashboardHref ? "Go to dashboard" : "Captain login"}</Link>
           <Link href="/register" className="rounded-md bg-[#d7aa54] px-4 py-3 text-center font-semibold text-[#081326]">Register interest</Link>
         </div>
       </SheetContent>

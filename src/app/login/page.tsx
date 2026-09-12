@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { LoginPanel } from "@/components/auth/login-panel";
 import { isDemoMode } from "@/lib/env";
-import { safeRelativePath } from "@/lib/auth-redirects";
+import { getSession } from "@/lib/auth";
+import { destinationForRole, safeRelativePath } from "@/lib/auth-redirects";
+import { redirect } from "next/navigation";
 
 const LOGIN_ERRORS: Record<string, string> = {
   "not-authorized": "This account has not been assigned access. Contact the tournament organizer.",
@@ -11,6 +13,8 @@ const LOGIN_ERRORS: Record<string, string> = {
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const query = await searchParams;
+  const session = await getSession();
+  if (session) redirect(destinationForRole(session.role, query.next));
   const nextPath = safeRelativePath(query.next) ?? undefined;
   const initialMessage = query.error ? LOGIN_ERRORS[query.error] ?? "Sign-in could not be completed." : "";
   return (

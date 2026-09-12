@@ -76,6 +76,22 @@ test("demo roles are separated", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Tournament pipeline" })).toBeVisible();
 });
 
+test("an authenticated visitor is offered their role dashboard instead of login", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview admin CRM/i }).click();
+  await expect(page).toHaveURL(/\/admin/);
+
+  await page.goto("/");
+  if ((page.viewportSize()?.width ?? 0) < 1024) await page.getByLabel("Open navigation").click();
+  const dashboardLink = page.getByRole("link", { name: "Go to dashboard" });
+  await expect(dashboardLink).toHaveAttribute("href", "/admin");
+
+  await dashboardLink.click();
+  await expect(page).toHaveURL(/\/admin/);
+  await page.goto("/login");
+  await expect(page).toHaveURL(/\/admin/);
+});
+
 test("admin teams include synthetic captains and pre-built enquiries", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("button", { name: /Preview admin CRM/i }).click();
