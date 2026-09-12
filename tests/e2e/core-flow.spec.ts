@@ -110,10 +110,10 @@ test("captain submits a UPI payment and admin confirms receipt", async ({ page }
   await expect(page.getByText(/accepted on/i)).toBeVisible();
 
   await page.goto("/dashboard/payment");
-  await expect(page.getByText("demo@onedreamcup")).toBeVisible();
+  await expect(page.getByText("masterstroke.in-2@okaxis").first()).toBeVisible();
   const upiPaymentLink = page.locator('a[href^="upi://pay?"]');
   await expect(upiPaymentLink).toHaveCount(1);
-  await expect(upiPaymentLink).toHaveAttribute("href", /^upi:\/\/pay\?/);
+  await expect(upiPaymentLink).toHaveAttribute("href", /pa=masterstroke\.in-2%40okaxis/);
   await page.getByRole("button", { name: "Payment done" }).click();
   await page.getByLabel("UPI transaction ID (optional)").fill("624512345678");
   await page.getByRole("button", { name: "Send for review" }).click();

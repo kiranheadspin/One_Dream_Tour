@@ -93,10 +93,12 @@ export default async function CaptainPaymentPage() {
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payee name</dt>
                   <dd className="mt-1 text-sm font-semibold">{upiPaymentConfig.payeeName}</dd>
                 </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payment phone</dt>
-                  <dd className="mt-1 flex items-center gap-2 text-sm font-semibold"><Phone aria-hidden="true" className="size-4" />{upiPaymentConfig.phone}</dd>
-                </div>
+                {upiPaymentConfig.phone ? (
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payment phone</dt>
+                    <dd className="mt-1 flex items-center gap-2 text-sm font-semibold"><Phone aria-hidden="true" className="size-4" />{upiPaymentConfig.phone}</dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payment reference</dt>
                   <dd className="mt-1 font-mono text-sm font-semibold">{paymentReference}</dd>
@@ -145,8 +147,12 @@ export default async function CaptainPaymentPage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-5">
             {qrCode ? (
-              <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="flex w-full max-w-[334px] flex-col items-center gap-3 rounded-xl border bg-white p-4 shadow-sm">
                 <Image src={qrCode} alt={`UPI QR code for ${upiPaymentConfig.payeeName}`} width={300} height={300} unoptimized className="size-full max-w-[300px]" />
+                <div className="w-full rounded-lg bg-[#f5f1e8] px-3 py-2.5 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8d672c]">UPI ID</p>
+                  <p className="mt-1 break-all font-mono text-sm font-bold text-[#081326]">{upiPaymentConfig.upiId}</p>
+                </div>
               </div>
             ) : currentStatus === "paid" ? (
               <div className="flex aspect-square w-full max-w-[300px] flex-col items-center justify-center gap-4 rounded-xl border bg-muted text-center">

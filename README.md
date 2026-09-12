@@ -92,9 +92,9 @@ See [.env.example](/Users/kirandn/Documents/One%20Dream%20Group/.env.example).
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser-safe Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only lead/webhook operations; never expose to browser |
-| `PAYMENT_UPI_ID` | Organizer-approved UPI ID encoded in the QR and payment intent |
+| `PAYMENT_UPI_ID` | Optional deployment override for the organizer-approved UPI ID encoded in the QR and payment intent |
 | `PAYMENT_UPI_PAYEE_NAME` | Verified payee name displayed to captains |
-| `PAYMENT_UPI_PHONE` | Organizer-approved payment phone shown for verification/contact |
+| `PAYMENT_UPI_PHONE` | Optional organizer-approved payment phone shown for verification/contact |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Browser-safe Razorpay key ID |
 | `RAZORPAY_KEY_SECRET` | Server-only order and payment-signature secret |
 | `RAZORPAY_WEBHOOK_SECRET` | Independent webhook signing secret |
@@ -128,7 +128,7 @@ Do not share one administrator identity between staff. Captain identities are pr
 
 ## Manual UPI setup
 
-1. Add the organizer-approved `PAYMENT_UPI_ID`, `PAYMENT_UPI_PAYEE_NAME` and `PAYMENT_UPI_PHONE` values to the deployment environment.
+1. Confirm the default UPI ID (`masterstroke.in-2@okaxis`) or override it with `PAYMENT_UPI_ID`; optionally set `PAYMENT_UPI_PAYEE_NAME` and `PAYMENT_UPI_PHONE` in the deployment environment.
 2. Verify the generated QR and **Make payment** link in at least Google Pay, PhonePe and Paytm test workflows.
 3. Publish verified GST treatment, payment schedule and refund terms.
 4. Set the `app_settings.payments_enabled` JSON value to `true` only after that review.

@@ -13,6 +13,11 @@ export const TOURNAMENT = {
   cities: ["Bangalore", "Chennai", "Hyderabad", "Pune"] as const,
 } as const;
 
+export const PAYMENT = {
+  upiId: "masterstroke.in-2@okaxis",
+  payeeName: "One Dream Cup",
+} as const;
+
 export const LEAD_STAGES = [
   "New",
   "Contacted",

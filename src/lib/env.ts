@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { PAYMENT } from "@/lib/constants";
 
 const schema = z.object({
   NEXT_PUBLIC_DEMO_MODE: z.enum(["true", "false"]),
@@ -29,11 +30,11 @@ export const env = parsed.data;
 export const isDemoMode = env.NEXT_PUBLIC_DEMO_MODE !== "false";
 
 export const upiPaymentConfig = {
-  upiId: env.PAYMENT_UPI_ID || (isDemoMode ? "demo@onedreamcup" : ""),
-  payeeName: env.PAYMENT_UPI_PAYEE_NAME || "One Dream Cup",
-  phone: env.PAYMENT_UPI_PHONE || (isDemoMode ? "+91 90000 00000" : ""),
-  configured: Boolean(env.PAYMENT_UPI_ID && env.PAYMENT_UPI_PHONE) || isDemoMode,
-  demo: isDemoMode && !env.PAYMENT_UPI_ID,
+  upiId: env.PAYMENT_UPI_ID || PAYMENT.upiId,
+  payeeName: env.PAYMENT_UPI_PAYEE_NAME || PAYMENT.payeeName,
+  phone: env.PAYMENT_UPI_PHONE || "",
+  configured: Boolean(env.PAYMENT_UPI_ID || PAYMENT.upiId),
+  demo: false,
 } as const;
 
 if (!isDemoMode) {
