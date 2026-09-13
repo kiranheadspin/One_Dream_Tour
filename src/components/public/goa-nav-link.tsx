@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { TreePalm, Waves } from "lucide-react";
+import type { ComponentProps } from "react";
 
 type GoaNavLinkProps = {
   mobile?: boolean;
-};
+} & Omit<ComponentProps<typeof Link>, "className" | "children" | "href">;
 
-export function GoaNavLink({ mobile = false }: GoaNavLinkProps) {
+export function GoaNavLink({ mobile = false, ...linkProps }: GoaNavLinkProps) {
   return (
     <Link
       href="/road-to-goa"
+      {...linkProps}
       data-testid={mobile ? "mobile-road-to-goa-link" : "road-to-goa-link"}
       className={`goa-nav-link ${mobile ? "goa-nav-link--mobile" : "goa-nav-link--desktop"}`}
     >

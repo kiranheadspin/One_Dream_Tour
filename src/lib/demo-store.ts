@@ -41,6 +41,8 @@ function sampleLeads(): Lead[] {
     futureInterests: ["Corporate sports events"],
     message: "Interested in representing our company in the city league.",
     stage,
+    hasInteraction: false,
+    isNew: false,
     marketingConsent: index % 2 === 0,
     operationalConsent: true,
     assignedTo: index > 0 ? "Kiran" : undefined,
@@ -50,8 +52,8 @@ function sampleLeads(): Lead[] {
   }));
 }
 
-function player(id: string, name: string, email: string, phone: string, employeeId: string, shirtSize: string, isCaptain = false): Player {
-  return { id, name, email, phone, employeeId, shirtSize, isCaptain, status: "Complete" };
+function player(id: string, name: string, email: string, phone: string, employeeId: string, epfoNumber: string, isCaptain = false): Player {
+  return { id, name, email, phone, employeeId, epfoNumber, isCaptain };
 }
 
 function sampleTeams(): DemoDatabase["teams"] {
@@ -60,59 +62,59 @@ function sampleTeams(): DemoDatabase["teams"] {
       id: "demo-team-1", leadId: "demo-lead-2", enquiryReference: "ODC-260802", name: "Northstar Strikers", company: "Northstar Systems", city: "Chennai",
       captainName: "Meera Nair", captainEmail: "meera@example.com", registrationStatus: "Payment pending", paymentStatus: "Not started",
       players: [
-        player("demo-player-1", "Meera Nair", "meera@example.com", "+91 90000 00101", "NS-0142", "M", true),
-        player("demo-player-2", "Rahul Menon", "rahul.menon@example.com", "+91 90000 00201", "NS-0189", "L"),
+        player("demo-player-1", "Meera Nair", "meera@example.com", "+91 90000 00101", "NS-0142", "100000000001", true),
+        player("demo-player-2", "Rahul Menon", "rahul.menon@example.com", "+91 90000 00201", "NS-0189", "100000000002"),
       ], updatedAt: seededAt,
     },
     {
       id: "demo-team-2", leadId: "demo-lead-1", enquiryReference: "ODC-260801", name: "Acme Blazers", company: "Acme Technologies", city: "Bangalore",
       captainName: "Arjun Rao", captainEmail: "arjun@example.com", registrationStatus: "Draft", paymentStatus: "Not started",
       players: [
-        player("demo-player-3", "Arjun Rao", "arjun@example.com", "+91 90000 00100", "AT-2041", "L", true),
-        player("demo-player-4", "Devika Shetty", "devika.shetty@example.com", "+91 90000 00200", "AT-2088", "M"),
-        player("demo-player-5", "Karthik Jain", "karthik.jain@example.com", "+91 90000 00300", "AT-2114", "XL"),
+        player("demo-player-3", "Arjun Rao", "arjun@example.com", "+91 90000 00100", "AT-2041", "100000000003", true),
+        player("demo-player-4", "Devika Shetty", "devika.shetty@example.com", "+91 90000 00200", "AT-2088", "100000000004"),
+        player("demo-player-5", "Karthik Jain", "karthik.jain@example.com", "+91 90000 00300", "AT-2114", "100000000005"),
       ], updatedAt: "2026-08-02T08:45:00.000Z",
     },
     {
       id: "demo-team-3", leadId: "demo-lead-3", enquiryReference: "ODC-260803", name: "BluePeak Chargers", company: "BluePeak Labs", city: "Pune",
       captainName: "Vikram Shah", captainEmail: "vikram@example.com", registrationStatus: "Payment pending", paymentStatus: "Pending",
       players: [
-        player("demo-player-6", "Vikram Shah", "vikram@example.com", "+91 90000 00102", "BP-0317", "M", true),
-        player("demo-player-7", "Neha Patil", "neha.patil@example.com", "+91 90000 00202", "BP-0344", "S"),
-        player("demo-player-8", "Sameer Joshi", "sameer.joshi@example.com", "+91 90000 00302", "BP-0381", "L"),
-        player("demo-player-9", "Ishaan Deshmukh", "ishaan.d@example.com", "+91 90000 00402", "BP-0402", "XL"),
+        player("demo-player-6", "Vikram Shah", "vikram@example.com", "+91 90000 00102", "BP-0317", "100000000006", true),
+        player("demo-player-7", "Neha Patil", "neha.patil@example.com", "+91 90000 00202", "BP-0344", "100000000007"),
+        player("demo-player-8", "Sameer Joshi", "sameer.joshi@example.com", "+91 90000 00302", "BP-0381", "100000000008"),
+        player("demo-player-9", "Ishaan Deshmukh", "ishaan.d@example.com", "+91 90000 00402", "BP-0402", "100000000009"),
       ], updatedAt: "2026-08-03T11:20:00.000Z",
     },
     {
       id: "demo-team-4", leadId: "demo-lead-4", enquiryReference: "ODC-260804", name: "Cloudline Hawks", company: "Cloudline India", city: "Hyderabad",
       captainName: "Sana Khan", captainEmail: "sana@example.com", registrationStatus: "Draft", paymentStatus: "Not started",
       players: [
-        player("demo-player-10", "Sana Khan", "sana@example.com", "+91 90000 00103", "CL-1108", "M", true),
-        player("demo-player-11", "Aditya Reddy", "aditya.reddy@example.com", "+91 90000 00203", "CL-1146", "L"),
+        player("demo-player-10", "Sana Khan", "sana@example.com", "+91 90000 00103", "CL-1108", "100000000010", true),
+        player("demo-player-11", "Aditya Reddy", "aditya.reddy@example.com", "+91 90000 00203", "CL-1146", "100000000011"),
       ], updatedAt: "2026-08-04T07:10:00.000Z",
     },
     {
       id: "demo-team-5", leadId: "demo-lead-5", enquiryReference: "ODC-260805", name: "Orbit Titans", company: "Orbit Commerce", city: "Bangalore",
       captainName: "Nitin Bose", captainEmail: "nitin@example.com", registrationStatus: "Registered", paymentStatus: "Paid",
       players: [
-        player("demo-player-12", "Nitin Bose", "nitin@example.com", "+91 90000 00104", "OC-0711", "XL", true),
-        player("demo-player-13", "Tanvi Rao", "tanvi.rao@example.com", "+91 90000 00204", "OC-0748", "M"),
-        player("demo-player-14", "Manish Gupta", "manish.gupta@example.com", "+91 90000 00304", "OC-0792", "L"),
+        player("demo-player-12", "Nitin Bose", "nitin@example.com", "+91 90000 00104", "OC-0711", "100000000012", true),
+        player("demo-player-13", "Tanvi Rao", "tanvi.rao@example.com", "+91 90000 00204", "OC-0748", "100000000013"),
+        player("demo-player-14", "Manish Gupta", "manish.gupta@example.com", "+91 90000 00304", "OC-0792", "100000000014"),
       ], updatedAt: "2026-08-05T13:40:00.000Z",
     },
     {
       id: "demo-team-6", leadId: "demo-lead-7", enquiryReference: "ODC-260807", name: "Cedarwave Kings", company: "Cedarwave Digital", city: "Pune",
       captainName: "Rohan Kulkarni", captainEmail: "rohan@example.com", registrationStatus: "Draft", paymentStatus: "Not started",
-      players: [player("demo-player-15", "Rohan Kulkarni", "rohan@example.com", "+91 90000 00106", "CD-1510", "L", true)],
+      players: [player("demo-player-15", "Rohan Kulkarni", "rohan@example.com", "+91 90000 00106", "CD-1510", "100000000015", true)],
       updatedAt: "2026-08-07T10:15:00.000Z",
     },
     {
       id: "demo-team-7", leadId: "demo-lead-8", enquiryReference: "ODC-260808", name: "Nimbus Royals", company: "Nimbus Healthcare", city: "Hyderabad",
       captainName: "Ayesha Mirza", captainEmail: "ayesha@example.com", registrationStatus: "Payment pending", paymentStatus: "Failed",
       players: [
-        player("demo-player-16", "Ayesha Mirza", "ayesha@example.com", "+91 90000 00107", "NH-0912", "S", true),
-        player("demo-player-17", "Farhan Ali", "farhan.ali@example.com", "+91 90000 00207", "NH-0937", "M"),
-        player("demo-player-18", "Lavanya Rao", "lavanya.rao@example.com", "+91 90000 00307", "NH-0965", "M"),
+        player("demo-player-16", "Ayesha Mirza", "ayesha@example.com", "+91 90000 00107", "NH-0912", "100000000016", true),
+        player("demo-player-17", "Farhan Ali", "farhan.ali@example.com", "+91 90000 00207", "NH-0937", "100000000017"),
+        player("demo-player-18", "Lavanya Rao", "lavanya.rao@example.com", "+91 90000 00307", "NH-0965", "100000000018"),
       ], updatedAt: "2026-08-08T12:05:00.000Z",
     },
   ];
@@ -151,6 +153,15 @@ export async function readDemoDatabase(): Promise<DemoDatabase> {
       primaryTeam.enquiryReference = "ODC-260802";
       changed = true;
     }
+    for (const team of database.teams) {
+      for (const player of team.players) {
+        const storedPlayer = player as Player & { epfoNumber?: string };
+        if (typeof storedPlayer.epfoNumber !== "string") {
+          storedPlayer.epfoNumber = "";
+          changed = true;
+        }
+      }
+    }
     if (missingLeads.length || missingTeams.length) {
       database.leads.push(...missingLeads);
       database.teams.push(...missingTeams);
@@ -178,7 +189,7 @@ export async function createDemoLead(input: LeadInput) {
   if (duplicate) return { lead: duplicate, duplicate: true };
 
   const timestamp = new Date().toISOString();
-  const lead: Lead = { id: randomUUID(), reference: referenceFor(database), ...input, email: normalizedEmail, stage: "New", createdAt: timestamp, updatedAt: timestamp };
+  const lead: Lead = { id: randomUUID(), reference: referenceFor(database), ...input, email: normalizedEmail, stage: "New", hasInteraction: false, isNew: false, createdAt: timestamp, updatedAt: timestamp };
   database.leads.unshift(lead);
   database.consents.push(
     { id: randomUUID(), leadId: lead.id, purpose: "operations", granted: true, policyVersion: "2026-08-01", source: "public-enquiry-form", createdAt: timestamp },
@@ -200,10 +211,10 @@ export async function updateDemoLead(id: string, update: { stage?: LeadStage; as
   return lead;
 }
 
-export async function addDemoPlayer(input: Omit<Player, "id" | "isCaptain" | "status">) {
+export async function addDemoPlayer(input: Omit<Player, "id" | "isCaptain">) {
   const database = await readDemoDatabase();
   const team = database.teams[0];
-  const player: Player = { ...input, id: randomUUID(), isCaptain: false, status: "Complete" };
+  const player: Player = { ...input, id: randomUUID(), isCaptain: false };
   team.players.push(player);
   team.updatedAt = new Date().toISOString();
   await writeDatabase(database);

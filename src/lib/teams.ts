@@ -7,17 +7,19 @@ import type { Team } from "@/lib/types";
 export async function getCaptainTeamOrNull(profileId: string): Promise<Team | null> {
   if (isDemoMode) return (await readDemoDatabase()).teams[0];
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("teams").select("id,name,registration_status,rules_accepted_at,updated_at,companies!inner(legal_name),tournament_cities!inner(city),profiles!teams_captain_profile_id_fkey(full_name),team_members(id,full_name,email,phone,employee_id,shirt_size,is_captain)").eq("captain_profile_id", profileId).is("deleted_at", null).limit(1).maybeSingle();
+  const { data, error } = await supabase.from("teams").select("id,name,registration_status,rules_accepted_at,updated_at,companies!inner(legal_name),tournament_cities!inner(city),profiles!teams_captain_profile_id_fkey(full_name),team_members(id,full_name,email,phone,employee_id,epfo_number,is_captain),registrations(payments(status))").eq("captain_profile_id", profileId).is("deleted_at", null).limit(1).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   const company = Array.isArray(data.companies) ? data.companies[0] : data.companies;
   const city = Array.isArray(data.tournament_cities) ? data.tournament_cities[0] : data.tournament_cities;
   const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+  const registration = Array.isArray(data.registrations) ? data.registrations[0] : data.registrations;
+  const payments = registration?.payments ?? [];
   return {
     id: data.id, name: data.name, company: company?.legal_name ?? "", city: city?.city as Team["city"], captainName: profile?.full_name ?? "",
     captainEmail: "", registrationStatus: data.registration_status as Team["registrationStatus"], rulesAcceptedAt: data.rules_accepted_at ?? undefined,
-    paymentStatus: data.registration_status === "Registered" ? "Paid" : "Not started",
-    players: (data.team_members ?? []).map((member) => ({ id: member.id, name: member.full_name, email: member.email, phone: member.phone, employeeId: member.employee_id, shirtSize: member.shirt_size ?? "", isCaptain: member.is_captain, status: member.email && member.phone && member.employee_id ? "Complete" as const : "Missing details" as const })),
+    paymentStatus: payments.some((payment) => payment.status === "paid") ? "Paid" : "Not started",
+    players: (data.team_members ?? []).map((member) => ({ id: member.id, name: member.full_name, email: member.email, phone: member.phone, employeeId: member.employee_id, epfoNumber: member.epfo_number ?? "", isCaptain: member.is_captain })),
     updatedAt: data.updated_at,
   };
 }

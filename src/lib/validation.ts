@@ -61,5 +61,5 @@ export const playerSchema = z.object({
   email: z.email().max(180),
   phone: z.string().trim().regex(/^[+\d][\d\s-]{8,16}$/),
   employeeId: z.string().trim().min(1).max(80),
-  shirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+  epfoNumber: z.string().trim().max(80),
 });

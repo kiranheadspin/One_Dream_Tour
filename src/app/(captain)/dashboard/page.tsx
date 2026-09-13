@@ -33,9 +33,14 @@ export default async function CaptainDashboard() {
     { label: "Payment", complete: team.paymentStatus === "Paid", href: "/dashboard/payment" },
   ];
   const completion = steps.filter((step) => step.complete).length * 25;
-  const nextHref = !team.rulesAcceptedAt ? "/dashboard/rules" : "/dashboard/payment";
-  const nextTitle = !team.rulesAcceptedAt ? "Review the rules" : "Complete payment";
-  const nextCopy = !team.rulesAcceptedAt ? "Read and record acceptance of the displayed rules version." : "Review the confirmed amount and terms before paying.";
+  const registrationComplete = team.paymentStatus === "Paid";
+  const nextHref = !team.rulesAcceptedAt ? "/dashboard/rules" : registrationComplete ? "/dashboard/confirmation" : "/dashboard/payment";
+  const nextTitle = !team.rulesAcceptedAt ? "Review the rules" : registrationComplete ? "Registration complete" : "Complete payment";
+  const nextCopy = !team.rulesAcceptedAt
+    ? "Read and record acceptance of the displayed rules version."
+    : registrationComplete
+      ? "Your payment has been recorded and your team registration is confirmed."
+      : "Review the confirmed amount and terms before paying.";
 
   return (
     <div className="mx-auto max-w-6xl">

@@ -10,6 +10,7 @@ export default async function AdminDashboard() {
   const registered = leads.filter((lead) => lead.stage === "Registered").length;
   const due = leads.filter((lead) => lead.nextFollowUp && new Date(lead.nextFollowUp) <= new Date("2026-08-08")).length;
   const payments = paymentRecords.filter((payment) => payment.status === "paid").length;
+  const newLeadCount = leads.filter((lead) => lead.isNew).length;
   const accessQueue = leads.filter((lead) => !lead.captainProvisioned && !["Lost", "Archived"].includes(lead.stage)).slice(0, 4);
   const metrics = [
     { label: "Active leads", value: leads.filter((lead) => lead.stage !== "Archived" && lead.stage !== "Lost").length, icon: Users, note: "current pipeline" },
@@ -69,8 +70,8 @@ export default async function AdminDashboard() {
 
       <section className="mt-8">
         <div className="mb-4">
-          <h2 className="text-2xl text-[#081326]">Recent leads</h2>
-          <p className="mt-1 text-xs text-slate-500">Most recently created enquiries</p>
+          <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl text-[#081326]">Recent leads</h2><Link href="/admin/leads?batch=new" className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">New batch · {newLeadCount}</Link></div>
+          <p className="mt-1 text-xs text-slate-500">Stage colors make converted and in-progress leads easy to scan. The New batch contains the three latest untouched enquiries.</p>
         </div>
         <LeadTable leads={leads.slice(0, 6)} />
       </section>

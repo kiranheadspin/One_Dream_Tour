@@ -11,6 +11,46 @@ test("public page presents verified tournament facts", async ({ page }) => {
   await expect(page.getByTestId("road-to-goa-link")).toHaveAttribute("href", "/road-to-goa");
 });
 
+test("mobile public navigation closes after selecting a page", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "The navigation drawer is mobile-only.");
+
+  for (const [label, route] of [
+    ["Tournament", "/tournament"],
+    ["Cities", "/cities"],
+    ["Road to Goa", "/road-to-goa"],
+    ["Rules", "/rules"],
+    ["FAQ", "/faq"],
+    ["Corporate Events", "/corporate-events"],
+  ]) {
+    await page.goto("/");
+    await page.getByLabel("Open navigation").click();
+    await expect(page.getByRole("navigation", { name: "Mobile navigation" })).toBeVisible();
+    await page.getByRole("link", { name: label, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${route}$`));
+    await expect(page.getByRole("navigation", { name: "Mobile navigation" })).toBeHidden();
+  }
+});
+
+test("global loading indicator gives non-blocking feedback for client-side writes", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "One Dream Cup" })).toBeVisible({ timeout: 60_000 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.loadingIndicatorReady)).toBe("true");
+  await page.route("**/api/loading-contract", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.fulfill({ status: 204 });
+  });
+
+  await page.evaluate(() => {
+    void fetch("/api/loading-contract", { method: "POST" });
+  });
+
+  const indicator = page.getByTestId("global-loading-indicator");
+  await expect(indicator).toBeVisible();
+  await expect(indicator).toContainText("Saving changes");
+  await expect(indicator).toBeHidden();
+});
+
 test("public information pages share the home page register-interest CTA", async ({ page }) => {
   for (const route of ["/tournament", "/cities", "/road-to-goa", "/rules", "/sponsors", "/faq"]) {
     await page.goto(route);
@@ -53,12 +93,18 @@ test("visitor can submit the short enquiry and receive a reference", async ({ pa
   await page.goto(`/admin/leads?q=${encodeURIComponent(unique)}`);
   const lead = page.locator("tr:visible, article:visible").filter({ hasText: unique });
   await expect(lead).toContainText(unique);
+  await expect(lead.locator("span.rounded-full", { hasText: "New" })).toBeVisible();
   const stage = lead.getByRole("combobox");
   await expect(stage).toHaveCount(1);
   await stage.selectOption("Qualified");
   await expect(stage).toHaveValue("Qualified");
-  await stage.selectOption("Registration invited");
-  await expect(stage).toHaveValue("Registration invited");
+  await page.goto("/admin/leads?batch=new");
+  await expect(page.locator("tr:visible, article:visible").filter({ hasText: unique })).toHaveCount(0);
+  await page.goto(`/admin/leads?q=${encodeURIComponent(unique)}`);
+  const updatedLead = page.locator("tr:visible, article:visible").filter({ hasText: unique });
+  const updatedStage = updatedLead.getByRole("combobox");
+  await updatedStage.selectOption("Registration invited");
+  await expect(updatedStage).toHaveValue("Registration invited");
 });
 
 test("demo roles are separated", async ({ page }) => {
@@ -68,6 +114,7 @@ test("demo roles are separated", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/dashboard/);
+  if ((page.viewportSize()?.width ?? 0) < 768) await page.getByLabel("Open workspace navigation").click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.goto("/login");
   await page.getByRole("button", { name: /Preview admin CRM/i }).click();
@@ -101,6 +148,11 @@ test("admin teams include synthetic captains and pre-built enquiries", async ({ 
   await expect(page.getByText("Arjun Rao")).toBeVisible();
   await expect(page.getByText("Enquiry ODC-260801")).toBeVisible();
   await expect(page.locator("article")).toHaveCount(7);
+  await page.getByRole("link", { name: "View Acme Blazers" }).click();
+  await expect(page).toHaveURL(/\/admin\/teams\/demo-team-2$/);
+  await expect(page.getByRole("heading", { name: "Acme Blazers" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Team members" })).toBeVisible();
+  await expect(page.getByText("Arjun Rao").last()).toBeVisible();
 });
 
 test("captain submits a UPI payment and admin confirms receipt", async ({ page }, testInfo) => {
@@ -115,9 +167,9 @@ test("captain submits a UPI payment and admin confirms receipt", async ({ page }
   await page.getByLabel("Work email").fill("player-e2e@example.com");
   await page.getByLabel("Phone").fill("+91 98765 43211");
   await page.getByLabel("Employee ID").fill("E2E-001");
-  await page.getByLabel("Shirt size").selectOption("L");
+  await page.getByLabel("EPFO number (optional)").fill("100000000019");
   await page.getByRole("button", { name: "Add player", exact: true }).click();
-  await expect(page.getByText("E2E Player")).toBeVisible();
+  await expect(page.getByRole("table").getByText("E2E Player")).toBeVisible();
 
   await page.goto("/dashboard/rules");
   await page.getByText(/I have reviewed this displayed rules version/i).click();
@@ -164,8 +216,40 @@ test("captain submits a UPI payment and admin confirms receipt", async ({ page }
   await page.getByRole("button", { name: "Save preference" }).click();
   await expect(page.getByText("Preference saved.")).toBeVisible();
 
-  const denied = await page.goto("/dashboard/teams/not-owned");
-  expect(denied?.status()).toBe(404);
+  await page.goto("/dashboard/teams/not-owned");
+  await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
+});
+
+test("captain player details stay readable and easy to add on mobile", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Mobile layout is covered in the mobile browser project.");
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(message.text());
+  });
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview captain portal/i }).click();
+  await expect(page).toHaveURL(/\/dashboard\/?$/);
+  await page.goto("/dashboard/team");
+
+  await expect(page.getByTestId("player-mobile-list")).toBeVisible();
+  await expect(page.getByTestId("player-mobile-card").first()).toContainText("EPFO number");
+  await expect(page.getByText("Status", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Add player" }).click();
+  await expect(page.getByLabel("EPFO number (optional)")).toBeVisible();
+  await page.getByLabel("Full name").fill("Mobile E2E Player");
+  await page.getByLabel("Work email").fill("mobile-player-e2e@example.com");
+  await page.getByLabel("Phone").fill("+91 98765 43212");
+  await page.getByLabel("Employee ID").fill("MOBILE-E2E-001");
+  await page.getByRole("button", { name: "Add player", exact: true }).click();
+
+  const addedPlayer = page.getByTestId("player-mobile-card").filter({ hasText: "Mobile E2E Player" });
+  await expect(addedPlayer).toBeVisible();
+  await expect(addedPlayer).toContainText("EPFO number");
+  await expect(addedPlayer).toContainText("—");
+  expect(browserErrors).toEqual([]);
 });
 
 test("mobile navigation exposes primary destinations", async ({ page }, testInfo) => {
@@ -186,6 +270,9 @@ test("captain mobile dashboard navigation closes after changing routes", async (
 
   await page.getByLabel("Open workspace navigation").click();
   const navigation = page.getByRole("dialog", { name: "Captain portal" });
+  await expect(navigation.getByLabel("Signed in profile")).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(navigation.getByRole("navigation", { name: "captain mobile navigation" })).toHaveCSS("overflow-y", "auto");
   await expect(navigation.getByRole("link", { name: "Public site" })).toHaveAttribute("href", "/");
   await navigation.getByRole("link", { name: "Rules" }).click();
 
@@ -201,6 +288,9 @@ test("admin mobile dashboard navigation closes after changing routes", async ({ 
 
   await page.getByLabel("Open workspace navigation").click();
   const navigation = page.getByRole("dialog", { name: "Tournament CRM" });
+  await expect(navigation.getByLabel("Signed in profile")).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(navigation.getByRole("navigation", { name: "admin mobile navigation" })).toHaveCSS("overflow-y", "auto");
   await expect(navigation.getByRole("link", { name: "Public site" })).toHaveAttribute("href", "/");
   await navigation.getByRole("link", { name: "Leads" }).click();
 

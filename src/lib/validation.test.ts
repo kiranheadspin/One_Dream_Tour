@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captainInvitationSchema, leadSchema, shortLeadSchema } from "@/lib/validation";
+import { captainInvitationSchema, leadSchema, playerSchema, shortLeadSchema } from "@/lib/validation";
 
 const valid = {
   captainName: "Meera Nair", displayName: "Meera", phone: "+91 98765 43210", whatsapp: "+91 98765 43210",
@@ -57,5 +57,21 @@ describe("captainInvitationSchema", () => {
   it("rejects empty and excessively long team names", () => {
     expect(captainInvitationSchema.safeParse({ teamName: " " }).success).toBe(false);
     expect(captainInvitationSchema.safeParse({ teamName: "x".repeat(121) }).success).toBe(false);
+  });
+});
+
+describe("playerSchema", () => {
+  const player = {
+    name: "Meera Nair",
+    email: "meera@company.example",
+    phone: "+919876543210",
+    employeeId: "NS-0142",
+    epfoNumber: "100000000001",
+  };
+
+  it("accepts EPFO/UAN as an optional player detail", () => {
+    expect(playerSchema.safeParse(player).success).toBe(true);
+    expect(playerSchema.safeParse({ ...player, epfoNumber: "" }).success).toBe(true);
+    expect(playerSchema.safeParse({ ...player, epfoNumber: "x".repeat(81) }).success).toBe(false);
   });
 });

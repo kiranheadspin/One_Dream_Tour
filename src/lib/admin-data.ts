@@ -4,6 +4,19 @@ import { readDemoDatabase } from "@/lib/demo-store";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface AdminTeamView { id:string; name:string; company:string; city:string; registrationStatus:string; captainName:string; playerCount:number; paymentStatus:string; enquiryReference:string; }
+export interface AdminTeamDetail extends AdminTeamView {
+  rulesAcceptedAt?: string;
+  updatedAt: string;
+  players: Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    employeeId: string;
+    epfoNumber: string;
+    isCaptain: boolean;
+  }>;
+}
 export interface AdminPaymentView {
   id: string;
   orderId: string;
@@ -24,6 +37,75 @@ export async function listAdminTeams():Promise<AdminTeamView[]> {
   const {data,error}=await supabase.from("teams").select("id,name,registration_status,companies!inner(legal_name),tournament_cities!inner(city),profiles!teams_captain_profile_id_fkey(full_name),team_members(id),registrations(leads(reference),payments(status))").is("deleted_at",null).order("created_at",{ascending:false});
   if(error)throw error;
   return data.map((row)=>{const company=Array.isArray(row.companies)?row.companies[0]:row.companies;const city=Array.isArray(row.tournament_cities)?row.tournament_cities[0]:row.tournament_cities;const captain=Array.isArray(row.profiles)?row.profiles[0]:row.profiles;const registration=Array.isArray(row.registrations)?row.registrations[0]:row.registrations;const lead=Array.isArray(registration?.leads)?registration.leads[0]:registration?.leads;const payments=registration?.payments??[];return{id:row.id,name:row.name,company:company?.legal_name??"",city:city?.city??"",registrationStatus:row.registration_status,captainName:captain?.full_name??"",playerCount:row.team_members?.length??0,paymentStatus:payments.some((payment)=>payment.status==="paid")?"Paid":"Pending",enquiryReference:lead?.reference??"Not linked"};});
+}
+
+export async function getAdminTeam(teamId: string): Promise<AdminTeamDetail | null> {
+  if (isDemoMode) {
+    const team = (await readDemoDatabase()).teams.find((item) => item.id === teamId);
+    if (!team) return null;
+    return {
+      id: team.id,
+      name: team.name,
+      company: team.company,
+      city: team.city,
+      registrationStatus: team.registrationStatus,
+      captainName: team.captainName,
+      playerCount: team.players.length,
+      paymentStatus: team.paymentStatus,
+      enquiryReference: team.enquiryReference ?? "Not linked",
+      rulesAcceptedAt: team.rulesAcceptedAt,
+      updatedAt: team.updatedAt,
+      players: team.players.map((player) => ({
+        id: player.id,
+        name: player.name,
+        email: player.email,
+        phone: player.phone,
+        employeeId: player.employeeId,
+        epfoNumber: player.epfoNumber ?? "",
+        isCaptain: player.isCaptain,
+      })),
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .select("id,name,registration_status,rules_accepted_at,updated_at,companies!inner(legal_name),tournament_cities!inner(city),profiles!teams_captain_profile_id_fkey(full_name),team_members(id,full_name,email,phone,employee_id,epfo_number,is_captain),registrations(leads(reference),payments(status))")
+    .eq("id", teamId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const company = Array.isArray(data.companies) ? data.companies[0] : data.companies;
+  const city = Array.isArray(data.tournament_cities) ? data.tournament_cities[0] : data.tournament_cities;
+  const captain = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+  const registration = Array.isArray(data.registrations) ? data.registrations[0] : data.registrations;
+  const lead = Array.isArray(registration?.leads) ? registration.leads[0] : registration?.leads;
+  const payments = registration?.payments ?? [];
+
+  return {
+    id: data.id,
+    name: data.name,
+    company: company?.legal_name ?? "",
+    city: city?.city ?? "",
+    registrationStatus: data.registration_status,
+    captainName: captain?.full_name ?? "",
+    playerCount: data.team_members?.length ?? 0,
+    paymentStatus: payments.some((payment) => payment.status === "paid") ? "Paid" : "Pending",
+    enquiryReference: lead?.reference ?? "Not linked",
+    rulesAcceptedAt: data.rules_accepted_at ?? undefined,
+    updatedAt: data.updated_at,
+    players: (data.team_members ?? []).map((member) => ({
+      id: member.id,
+      name: member.full_name,
+      email: member.email,
+      phone: member.phone,
+      employeeId: member.employee_id,
+      epfoNumber: member.epfo_number ?? "",
+      isCaptain: member.is_captain,
+    })),
+  };
 }
 
 export async function listAdminPayments():Promise<AdminPaymentView[]> {

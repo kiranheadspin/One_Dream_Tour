@@ -101,6 +101,25 @@
   .section-pad { padding-block: clamp(4rem, 8vw, 7.5rem); }
   .eyebrow { letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.72rem; font-weight: 700; }
   .text-balance { text-wrap: balance; }
+
+  .loading-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .loading-shimmer::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 22%, rgb(255 255 255 / 20%) 44%, transparent 66%);
+    content: "";
+    transform: translateX(-100%);
+    animation: loading-shimmer 1.65s ease-in-out infinite;
+  }
+
+  .loading-progress-bar {
+    width: 38%;
+    animation: loading-progress 1.05s ease-in-out infinite;
+  }
 }
 
 @layer components {
@@ -309,6 +328,15 @@
     50% { opacity: 1; transform: scale(1.08); }
   }
 
+  @keyframes loading-shimmer {
+    to { transform: translateX(100%); }
+  }
+
+  @keyframes loading-progress {
+    0% { transform: translateX(-110%); }
+    100% { transform: translateX(365%); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .goa-nav-link,
     .goa-nav-link::after,
@@ -317,6 +345,11 @@
     .goa-nav-sun {
       animation: none;
       transition-duration: 0.01ms;
+    }
+
+    .loading-shimmer::after,
+    .loading-progress-bar {
+      animation: none;
     }
   }
 }

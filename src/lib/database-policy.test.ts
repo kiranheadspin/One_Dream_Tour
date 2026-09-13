@@ -12,6 +12,7 @@ const productionReferenceDataMigration = readFileSync(path.join(process.cwd(), "
 const captainUpsertFixMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202608020008_fix_captain_registration_upsert.sql"), "utf8");
 const passwordAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120001_password_access.sql"), "utf8");
 const captainCompanyAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120002_captain_company_access.sql"), "utf8");
+const leadNewBatchMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609130002_lead_new_batch_activity.sql"), "utf8");
 
 describe("database security migration", () => {
   it.each(["leads", "teams", "team_members", "payments", "payment_events", "consent_records", "audit_logs"])("enables RLS for %s", (table) => {
@@ -115,5 +116,12 @@ describe("database security migration", () => {
     expect(captainCompanyAccessMigration).toContain("teams.company_id = companies.id");
     expect(captainCompanyAccessMigration).toContain("teams.captain_profile_id = (select auth.uid())");
     expect(captainCompanyAccessMigration).toContain("teams.deleted_at is null");
+  });
+
+  it("records an administrator's lead update as an atomic interaction", () => {
+    expect(leadNewBatchMigration).toContain("create or replace function public.update_lead_with_activity(");
+    expect(leadNewBatchMigration).toContain("for update;");
+    expect(leadNewBatchMigration).toContain("insert into public.lead_activities");
+    expect(leadNewBatchMigration).toContain("grant execute on function public.update_lead_with_activity");
   });
 });

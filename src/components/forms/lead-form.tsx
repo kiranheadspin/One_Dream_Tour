@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { showNavigationLoading } from "@/components/app/loading-overlay";
 
 const initial: ShortLeadInput = {
   name: "",
@@ -71,6 +72,7 @@ export function LeadForm({ attribution = {} }: { attribution?: Attribution }) {
       return;
     }
     analytics.track("enquiry_submitted", { city: values.city, source: "Website", marketingConsent: false });
+    showNavigationLoading("Saving your registration");
     router.push(`/register/success?reference=${encodeURIComponent(result.reference)}`);
   });
 

@@ -5,6 +5,7 @@ import { isDemoMode } from "@/lib/env";
 import { createDemoLead, readDemoDatabase, updateDemoLead } from "@/lib/demo-store";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import type { LeadStage } from "@/lib/constants";
+import { getNewLeadIds } from "@/lib/lead-batch";
 
 const fromRow = (row: Record<string, unknown>): Lead => ({
   id: String(row.id), reference: String(row.reference), captainName: String(row.captain_name), displayName: String(row.display_name),
@@ -17,7 +18,7 @@ const fromRow = (row: Record<string, unknown>): Lead => ({
   utmContent: row.utm_content ? String(row.utm_content) : undefined, referralCode: row.referral_code ? String(row.referral_code) : undefined,
   landingPage: row.landing_page ? String(row.landing_page) : undefined, referrer: row.referrer ? String(row.referrer) : undefined,
   futureInterests: (row.future_interests as string[] | null) ?? [], message: row.message ? String(row.message) : undefined,
-  stage: row.stage as LeadStage, marketingConsent: false, operationalConsent: true,
+  stage: row.stage as LeadStage, hasInteraction: false, isNew: false, marketingConsent: false, operationalConsent: true,
   assignedTo: row.assigned_to ? String(row.assigned_to) : undefined,
   nextFollowUp: row.next_follow_up_at ? String(row.next_follow_up_at) : undefined,
   createdAt: String(row.created_at), updatedAt: String(row.updated_at),
@@ -49,7 +50,12 @@ export async function createLead(input: LeadInput, evidence: LeadRequestEvidence
 }
 
 export async function listLeads() {
-  if (isDemoMode) return (await readDemoDatabase()).leads;
+  if (isDemoMode) {
+    const database = await readDemoDatabase();
+    const interactedLeadIds = new Set(database.audit.filter((entry) => entry.action === "lead.updated").map((entry) => entry.targetId));
+    const newLeadIds = getNewLeadIds(database.leads.map((lead) => ({ ...lead, hasInteraction: interactedLeadIds.has(lead.id) })));
+    return database.leads.map((lead) => ({ ...lead, hasInteraction: interactedLeadIds.has(lead.id), isNew: newLeadIds.has(lead.id) }));
+  }
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from("leads").select("*").is("deleted_at", null).order("created_at", { ascending: false }).limit(100);
   if (error) throw error;
@@ -57,7 +63,7 @@ export async function listLeads() {
   if (!leads.length) return leads;
 
   const leadIds = leads.map((lead) => lead.id);
-  const [{ data: consentRows, error: consentError }, { data: registrationRows, error: registrationError }] = await Promise.all([
+  const [{ data: consentRows, error: consentError }, { data: registrationRows, error: registrationError }, { data: activityRows, error: activityError }] = await Promise.all([
     supabase
       .from("consent_records")
       .select("lead_id,purpose,granted,created_at")
@@ -68,9 +74,14 @@ export async function listLeads() {
       .select("lead_id")
       .in("lead_id", leadIds)
       .is("deleted_at", null),
+    supabase
+      .from("lead_activities")
+      .select("lead_id")
+      .in("lead_id", leadIds),
   ]);
   if (consentError) throw consentError;
   if (registrationError) throw registrationError;
+  if (activityError) throw activityError;
 
   const latestConsent = new Map<string, { operations?: boolean; marketing?: boolean }>();
   for (const record of consentRows) {
@@ -81,19 +92,43 @@ export async function listLeads() {
     latestConsent.set(record.lead_id, current);
   }
   const provisionedLeadIds = new Set(registrationRows.map((registration) => registration.lead_id).filter(Boolean));
+  const interactedLeadIds = new Set(activityRows.map((activity) => activity.lead_id));
+  const newLeadIds = getNewLeadIds(leads.map((lead) => ({ ...lead, hasInteraction: interactedLeadIds.has(lead.id) })));
 
   return leads.map((lead) => ({
     ...lead,
+    hasInteraction: interactedLeadIds.has(lead.id),
+    isNew: newLeadIds.has(lead.id),
     captainProvisioned: provisionedLeadIds.has(lead.id),
     operationalConsent: latestConsent.get(lead.id)?.operations ?? false,
     marketingConsent: latestConsent.get(lead.id)?.marketing ?? false,
   }));
 }
 
-export async function updateLead(id: string, update: { stage?: LeadStage; assignedTo?: string; nextFollowUp?: string }) {
+export async function updateLead(id: string, update: { stage?: LeadStage; assignedTo?: string; nextFollowUp?: string }, actorId?: string) {
   if (isDemoMode) return updateDemoLead(id, update);
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("leads").update({ stage: update.stage, assigned_to: update.assignedTo || null, next_follow_up_at: update.nextFollowUp || null, updated_at: new Date().toISOString() }).eq("id", id).select("*").single();
+  const changes = {
+    ...(update.stage !== undefined ? { stage: update.stage } : {}),
+    ...(update.assignedTo !== undefined ? { assigned_to: update.assignedTo || null } : {}),
+    ...(update.nextFollowUp !== undefined ? { next_follow_up_at: update.nextFollowUp || null } : {}),
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await supabase.from("leads").update(changes).eq("id", id).is("deleted_at", null).select("*").maybeSingle();
   if (error) throw error;
+  if (!data) return null;
+
+  const { error: activityError } = await supabase.from("lead_activities").insert({
+    lead_id: id,
+    actor_id: actorId ?? null,
+    kind: "lead.updated",
+    note: "Lead details updated by operations.",
+    metadata: {
+      stage: update.stage ?? null,
+      assigned_to_updated: update.assignedTo !== undefined,
+      next_follow_up_updated: update.nextFollowUp !== undefined,
+    },
+  });
+  if (activityError) throw activityError;
   return fromRow(data);
 }

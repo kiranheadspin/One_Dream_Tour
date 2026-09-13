@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { GoaNavLink } from "@/components/public/goa-nav-link";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const links = [
@@ -15,8 +16,10 @@ const links = [
 ] as const;
 
 export function MobileNav({ dashboardHref }: { dashboardHref?: string }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger aria-label="Open navigation" className="inline-flex size-11 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white lg:hidden">
         <Menu aria-hidden="true" className="size-5" />
       </SheetTrigger>
@@ -28,11 +31,12 @@ export function MobileNav({ dashboardHref }: { dashboardHref?: string }) {
         <nav aria-label="Mobile navigation" className="flex flex-col gap-1 p-4">
           {links.map(([label, href]) => (
             href === "/road-to-goa" ? (
-              <GoaNavLink key={href} mobile />
+              <GoaNavLink key={href} mobile onClick={() => setOpen(false)} />
             ) : (
               <Link
                 key={href}
                 href={href}
+                onClick={() => setOpen(false)}
                 className="flex min-h-12 items-center rounded-md px-4 py-3 text-base text-white/80 hover:bg-white/10 hover:text-white"
               >
                 {label}

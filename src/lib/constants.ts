@@ -41,6 +41,20 @@ export const LEAD_STAGES = [
 
 export type LeadStage = (typeof LEAD_STAGES)[number];
 
+export const LEAD_STAGE_SELECT_CLASS: Record<LeadStage, string> = {
+  New: "[&>select]:border-sky-200 [&>select]:bg-sky-50 [&>select]:text-sky-800 [&>svg]:text-sky-600",
+  Contacted: "[&>select]:border-violet-200 [&>select]:bg-violet-50 [&>select]:text-violet-800 [&>svg]:text-violet-600",
+  Qualified: "[&>select]:border-cyan-200 [&>select]:bg-cyan-50 [&>select]:text-cyan-800 [&>svg]:text-cyan-600",
+  "Slot reserved": "[&>select]:border-purple-200 [&>select]:bg-purple-50 [&>select]:text-purple-800 [&>svg]:text-purple-600",
+  "Registration invited": "[&>select]:border-indigo-200 [&>select]:bg-indigo-50 [&>select]:text-indigo-800 [&>svg]:text-indigo-600",
+  "Payment pending": "[&>select]:border-amber-200 [&>select]:bg-amber-50 [&>select]:text-amber-800 [&>svg]:text-amber-600",
+  Registered: "[&>select]:border-emerald-200 [&>select]:bg-emerald-50 [&>select]:text-emerald-800 [&>svg]:text-emerald-600",
+  Participated: "[&>select]:border-teal-200 [&>select]:bg-teal-50 [&>select]:text-teal-800 [&>svg]:text-teal-600",
+  "Renewal opportunity": "[&>select]:border-orange-200 [&>select]:bg-orange-50 [&>select]:text-orange-800 [&>svg]:text-orange-600",
+  Lost: "[&>select]:border-rose-200 [&>select]:bg-rose-50 [&>select]:text-rose-800 [&>svg]:text-rose-600",
+  Archived: "[&>select]:border-slate-200 [&>select]:bg-slate-100 [&>select]:text-slate-600 [&>svg]:text-slate-500",
+};
+
 export function formatInr(paise: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

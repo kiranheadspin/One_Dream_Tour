@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Oswald } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalLoadingIndicator } from "@/components/app/loading-overlay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,6 +48,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
+        <Suspense fallback={null}>
+          <GlobalLoadingIndicator />
+        </Suspense>
         <Toaster richColors position="top-right" />
       </body>
     </html>

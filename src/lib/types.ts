@@ -29,6 +29,8 @@ export interface Lead {
   futureInterests: string[];
   message?: string;
   stage: LeadStage;
+  hasInteraction: boolean;
+  isNew: boolean;
   captainProvisioned?: boolean;
   marketingConsent: boolean;
   operationalConsent: boolean;
@@ -44,9 +46,8 @@ export interface Player {
   email: string;
   phone: string;
   employeeId: string;
-  shirtSize: string;
+  epfoNumber: string;
   isCaptain: boolean;
-  status: "Complete" | "Missing details";
 }
 
 export interface Team {

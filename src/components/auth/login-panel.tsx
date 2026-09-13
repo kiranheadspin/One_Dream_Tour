@@ -6,6 +6,7 @@ import { ArrowRight, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { showNavigationLoading } from "@/components/app/loading-overlay";
 
 export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMode: boolean; nextPath?: string; initialMessage?: string }) {
   const router = useRouter();
@@ -19,6 +20,7 @@ export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMo
     const response = await fetch("/api/demo/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ role }) });
     setLoading(false);
     if (!response.ok) return setMessage("Demo login could not be started.");
+    showNavigationLoading("Opening your workspace");
     router.push(role === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
@@ -29,6 +31,7 @@ export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMo
     const result = await response.json() as { redirectTo?: string; error?: string };
     setLoading(false);
     if (!response.ok || !result.redirectTo) return setMessage(result.error ?? "Sign-in failed.");
+    showNavigationLoading("Signing you in");
     router.push(result.redirectTo);
     router.refresh();
   }

@@ -1,5 +1,7 @@
 begin;
 
+drop policy if exists companies_linked_captain_select on public.companies;
+
 create policy companies_linked_captain_select
 on public.companies
 for select

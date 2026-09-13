@@ -108,15 +108,15 @@ export function MobileAppNavigation({ session }: { session: AppSession }) {
       >
         <Menu aria-hidden="true" className="size-5" />
       </SheetTrigger>
-      <SheetContent side="right" className="w-[min(88vw,23rem)] border-white/10 bg-[#081326] p-0 text-white">
-        <SheetHeader className="border-b border-white/10 px-6 py-6">
+      <SheetContent side="right" className="h-dvh max-h-dvh w-[min(88vw,23rem)] gap-0 overflow-hidden border-white/10 bg-[#081326] p-0 text-white">
+        <SheetHeader className="shrink-0 border-b border-white/10 px-6 py-6">
           <OneDreamGroupLogo alt="One Dream Group" className="w-[190px]" priority />
           <SheetTitle className="mt-5 text-xl text-white">{roleLabel}</SheetTitle>
           <SheetDescription className="text-white/50">
             {session.role === "admin" ? "Run tournament operations." : "Manage your team registration."}
           </SheetDescription>
         </SheetHeader>
-        <nav aria-label={`${session.role} mobile navigation`} className="grid gap-1.5 px-4 py-5">
+        <nav aria-label={`${session.role} mobile navigation`} className="grid min-h-0 flex-1 content-start gap-1.5 overflow-y-auto overscroll-contain px-4 py-5">
           {linksFor(session.role).map(([label, href, Icon]) => {
             const active = isCurrentPath(pathname, href);
             return (
@@ -136,8 +136,8 @@ export function MobileAppNavigation({ session }: { session: AppSession }) {
             );
           })}
         </nav>
-        <div className="mt-auto border-t border-white/10 p-5">
-          <div className="flex items-center gap-3 rounded-lg bg-white/6 p-3">
+        <div className="shrink-0 border-t border-white/10 p-5">
+          <div aria-label="Signed in profile" className="flex items-center gap-3 rounded-lg bg-white/6 p-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10">
               <UserRound aria-hidden="true" className="size-4" />
             </span>
