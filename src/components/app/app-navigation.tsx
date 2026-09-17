@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  CalendarDays,
   ClipboardCheck,
   CreditCard,
   FileText,
@@ -37,6 +38,7 @@ type AppLink = [label: string, href: string, icon: LucideIcon];
 const captainLinks: AppLink[] = [
   ["Overview", "/dashboard", LayoutDashboard],
   ["Team & players", "/dashboard/team", Users],
+  ["Schedule", "/dashboard/schedule", CalendarDays],
   ["Rules", "/dashboard/rules", ClipboardCheck],
   ["Documents", "/dashboard/documents", FileText],
   ["Payment", "/dashboard/payment", CreditCard],
@@ -50,6 +52,7 @@ const adminLinks: AppLink[] = [
   ["Overview", "/admin", LayoutDashboard],
   ["Leads", "/admin/leads", Users],
   ["Teams", "/admin/teams", ShieldCheck],
+  ["Schedule", "/admin/schedule", CalendarDays],
   ["Payments", "/admin/payments", CreditCard],
   ["Reports", "/admin/reports", BarChart3],
   ["Content", "/admin/content", Megaphone],

@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
             <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#d7aa54]/14 text-[#d7aa54]"><KeyRound aria-hidden="true" className="size-5" /></span>
             <div>
               <p className="eyebrow text-[#d7aa54]">Captain access</p>
-              <h2 className="mt-1.5 text-xl leading-snug sm:text-2xl">Create usernames and WhatsApp activation links</h2>
+              <h2 className="mt-1.5 text-xl leading-snug sm:text-2xl">Create usernames and WhatsApp passwords</h2>
               <p className="mt-1.5 text-sm text-white/52">Open an approved lead to generate private captain access.</p>
             </div>
           </div>

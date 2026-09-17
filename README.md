@@ -19,6 +19,7 @@ Password auth → captain-owned team → rules → UPI payment → admin confirm
 - React Hook Form and Zod at client/server boundaries
 - Supabase PostgreSQL, Auth, RLS and private Storage architecture
 - Manual UPI QR/app intent, captain review request and organizer receipt confirmation
+- Draft-first fixture publishing with transactional team/venue conflict checks, public homepage listings and captain-specific announcements
 - Reserved Razorpay server order, HMAC and webhook layer for a future provider-backed checkout
 - Admin-created captain usernames with one-time WhatsApp activation links
 - File-backed, `0600` demo store in `.data/` for local evaluation only
@@ -52,7 +53,7 @@ Important properties:
 - separate, append-only operational and marketing consent records
 - composite/partial indexes for active pipeline, ownership and follow-ups
 - captain policies bind records to `auth.uid()`; admin policies use `is_admin()`
-- exact dates, venues, GST, refund, squad, document and schedule data remain unpublished until verified
+- S50 city dates, playing rules and employment-evidence requirements are sourced from the brochure; unresolved terms are listed in `TOURNAMENT_RULES_AUDIT.md`.
 
 The checked-in starter type is [database.types.ts](/Users/kirandn/Documents/One%20Dream%20Group/src/lib/supabase/database.types.ts). Regenerate it after applying migrations:
 
@@ -203,7 +204,7 @@ Playwright covers verified public facts, public lead creation and CRM stage move
 
 ## Assumptions
 
-- Exact dates, venues, deadlines, squad limits, GST, refund terms, document requirements and full rules are unconfirmed.
+- See `TOURNAMENT_RULES_AUDIT.md` for verified S50 rules and outstanding organiser decisions. PF entry remains optional; PF is required at eligibility verification.
 - ₹14,500 is stored as ₹14,500.00 (`1,450,000` paise); prize values are stored the same way.
 - Public enquiry does not reserve a slot or create a payment obligation.
 - Captains manage the team; individual player accounts are out of scope for v1.
@@ -223,7 +224,7 @@ Playwright covers verified public facts, public lead creation and CRM stage move
 
 1. Confirm legal, finance, eligibility, document and refund policies.
 2. Connect a Supabase staging project and run authenticated RLS integration tests.
-3. Add organizer-approved content CRUD, slot controls and internal-note timeline UI.
+3. Add organizer-approved content CRUD, slot controls and internal-note timeline UI; fixture and announcement publishing is now available.
 4. Add validated private uploads only for confirmed document requirements.
 5. Complete manual UPI reconciliation, refunds and tax-invoice requirements; then decide whether to activate provider checkout.
 6. Add real transactional templates and WhatsApp Business only for permitted channels.

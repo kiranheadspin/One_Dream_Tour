@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { hasAcceptedCurrentRules } from "@/lib/tournament-rules";
 import QRCode from "qrcode";
 import { CheckCircle2, Clock3, ExternalLink, IndianRupee, Phone, ScanLine, ShieldCheck, Smartphone } from "lucide-react";
 import { SiGooglepay, SiPaytm, SiPhonepe } from "react-icons/si";
@@ -29,7 +31,8 @@ export default async function CaptainPaymentPage() {
   const paidPayment = payments.find((payment) => payment.status === "paid");
   const submittedPayment = payments.find((payment) => payment.status === "submitted");
   const currentStatus = paidPayment ? "paid" : submittedPayment ? "submitted" : "not_started";
-  const canStartPayment = currentStatus === "not_started";
+  const currentRulesAccepted = hasAcceptedCurrentRules(team);
+  const canStartPayment = currentStatus === "not_started" && currentRulesAccepted;
   const paymentReference = (team.enquiryReference ?? `ODC-${team.id}`).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 35);
   const paymentUri = upiPaymentConfig.configured && canStartPayment
     ? buildUpiPaymentUri({
@@ -60,6 +63,8 @@ export default async function CaptainPaymentPage() {
         </div>
         <Badge variant="outline">{formatPaymentStatus(currentStatus)}</Badge>
       </div>
+
+      {!currentRulesAccepted && <Alert className="mt-6"><AlertTitle>Review the current tournament rules</AlertTitle><AlertDescription>Before starting a new payment, <Link href="/dashboard/rules" className="font-semibold underline">accept the current rules version</Link>. Previous payments remain recorded.</AlertDescription></Alert>}
 
       {upiPaymentConfig.demo ? (
         <Alert className="mt-6">
@@ -170,7 +175,7 @@ export default async function CaptainPaymentPage() {
             <p className="max-w-sm text-center text-xs leading-5 text-muted-foreground">Check the verified payee name and amount in your UPI app before entering your UPI PIN.</p>
           </CardContent>
           <CardFooter className="block">
-            <PaymentAction status={currentStatus} enabled={upiPaymentConfig.configured} demo={session.demo} contactUrl={contactUrl} />
+            <PaymentAction status={currentStatus} enabled={upiPaymentConfig.configured && currentRulesAccepted} demo={session.demo} contactUrl={contactUrl} />
           </CardFooter>
         </Card>
       </section>

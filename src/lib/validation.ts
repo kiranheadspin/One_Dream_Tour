@@ -53,6 +53,10 @@ export const leadUpdateSchema = z.object({
 });
 
 export const captainInvitationSchema = z.object({
+  teamName: z.string().trim().min(2, "Enter a team name").max(120).optional(),
+});
+
+export const captainTeamNameSchema = z.object({
   teamName: z.string().trim().min(2, "Enter a team name").max(120),
 });
 
@@ -63,3 +67,32 @@ export const playerSchema = z.object({
   employeeId: z.string().trim().min(1).max(80),
   epfoNumber: z.string().trim().max(80),
 });
+
+export const fixtureSchema = z.object({
+  venueId: z.string().trim().min(1, "Choose a venue."),
+  homeTeamId: z.string().trim().min(1, "Choose the first team."),
+  awayTeamId: z.string().trim().min(1, "Choose the second team."),
+  roundName: z.string().trim().min(2, "Enter a round name.").max(80),
+  matchNumber: z.coerce.number().int().min(1).max(999),
+  startsAt: z.iso.datetime({ offset: true }),
+  endsAt: z.iso.datetime({ offset: true }),
+  status: z.enum(["draft", "published", "cancelled"]),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+}).superRefine((fixture, context) => {
+  if (fixture.homeTeamId === fixture.awayTeamId) {
+    context.addIssue({ code: "custom", path: ["awayTeamId"], message: "Choose two different teams." });
+  }
+  if (new Date(fixture.endsAt) <= new Date(fixture.startsAt)) {
+    context.addIssue({ code: "custom", path: ["endsAt"], message: "The end time must be after the start time." });
+  }
+});
+
+export type FixtureInput = z.infer<typeof fixtureSchema>;
+
+export const venueSchema = z.object({
+  tournamentCityId: z.string().trim().min(1, "Choose a tournament city."),
+  name: z.string().trim().min(2, "Enter a venue name.").max(160),
+  address: z.string().trim().max(300).optional().or(z.literal("")),
+});
+
+export type VenueInput = z.infer<typeof venueSchema>;

@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { LoginPanel } from "@/components/auth/login-panel";
 import { isDemoMode } from "@/lib/env";
 import { getSession } from "@/lib/auth";
 import { destinationForRole, safeRelativePath } from "@/lib/auth-redirects";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const LOGIN_ERRORS: Record<string, string> = {
   "not-authorized": "This account has not been assigned access. Contact the tournament organizer.",

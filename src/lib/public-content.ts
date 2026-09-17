@@ -1,9 +1,12 @@
+import { RULES_SECTIONS, RULES_SUMMARY } from "@/lib/tournament-rules";
+
 export const publicPages = {
   tournament: {
     eyebrow: "Tournament overview", title: "The 50th edition, built for corporate cricket.", intro: "One Dream Cup is a pure corporate tennis-ball cricket tournament across four city leagues, with eight qualifying teams progressing to Goa.",
     sections: [
       { title: "Tournament format", body: "Each city competition includes league matches, pre-quarter-finals, quarter-finals and semi-finals. The top two teams from each host city progress to the quarter-finals in Goa." },
-      { title: "Who can enter", body: "Teams must represent a company. Eligibility evidence and any final squad requirements will be shared during registration and remain configurable by the tournament administrator." },
+      { title: "Who can enter", body: RULES_SUMMARY.eligibility },
+      { title: "Playing conditions", body: RULES_SUMMARY.format },
       { title: "Confirmed city dates", body: "Bangalore: 21–22 November 2026; Pune: 12–13 December 2026; Hyderabad: 19–20 December 2026; Chennai: 30–31 January 2027. Venues and registration deadlines will be published after confirmation." },
     ],
   },
@@ -11,17 +14,13 @@ export const publicPages = {
     eyebrow: "Road to Goa", title: "Four cities. Eight qualifiers. One final stage.", intro: "The journey begins in Bangalore, Chennai, Hyderabad and Pune, then converges in Goa for the quarter-finals and title rounds.",
     sections: [
       { title: "1. City competition", body: "Corporate teams progress through league matches, pre-quarter-finals, quarter-finals and semi-finals in their host city." },
-      { title: "2. City qualification", body: "The top two teams from each host city earn their place in the eight-team Goa quarter-finals and receive ₹10,000 each." },
+      { title: "2. City qualification", body: "The top two teams from each host city earn their place in the eight-team Goa quarter-finals. " + RULES_SUMMARY.travel },
       { title: "3. Goa finals", body: "Quarter-finals, semi-finals and the championship match complete the 50th Special Edition. Exact Goa dates and venue are not yet published." },
     ],
   },
   rules: {
-    eyebrow: "Rules & eligibility", title: "Clear enough to compete. Final before you commit.", intro: "The core tournament format is confirmed. Detailed match rules, squad limits and documentary requirements will be versioned and accepted during registration.",
-    sections: [
-      { title: "Known format", body: "Corporate teams only; tennis-ball cricket; city league, pre-quarter-final, quarter-final and semi-final stages; two qualifiers per host city; eight-team knockout finals in Goa." },
-      { title: "To be confirmed", body: "Final squad limits, substitutes, player eligibility evidence, playing conditions, tie-break rules and disciplinary process will be published by the administrator before acceptance." },
-      { title: "Versioned acceptance", body: "Captains accept a dated rules version from their dashboard. The system records the acceptance time and does not silently replace accepted terms." },
-    ],
+    eyebrow: "Rules & eligibility", title: "Rules & eligibility for the 50th edition", intro: "A clear public summary of the S50 tournament brochure, including playing rules, company eligibility and the details still awaiting organiser confirmation.",
+    sections: RULES_SECTIONS,
   },
   sponsors: {
     eyebrow: "Partnerships", title: "Meet corporate communities through the game.", intro: "One Dream Cup offers a multi-city corporate sports platform. Partnership inventory is developed against confirmed tournament operations rather than invented packages.",

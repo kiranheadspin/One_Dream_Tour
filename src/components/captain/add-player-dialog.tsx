@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RULES_SUMMARY } from "@/lib/tournament-rules";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ export function AddPlayerDialog() {
             <Field>
               <FieldLabel htmlFor="epfo-number">EPFO number (optional)</FieldLabel>
               <Input id="epfo-number" name="epfoNumber" className="h-11" />
-              <FieldDescription>Enter the employee&apos;s UAN or EPFO member ID, if available.</FieldDescription>
+              <FieldDescription>{RULES_SUMMARY.pfEntry}</FieldDescription>
             </Field>
             {error ? <FieldError className="sm:col-span-2" role="alert">{error}</FieldError> : null}
           </FieldGroup>

@@ -1,20 +1,23 @@
 import "server-only";
 
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
+import { buildCaptainLoginUrl } from "@/lib/credential-login-link";
 import { env } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
-const ACTIVATION_LIFETIME_MS = 48 * 60 * 60 * 1000;
+const GENERATED_PASSWORD_LENGTH = 20;
+const LOWERCASE_LETTERS = "abcdefghjkmnpqrstuvwxyz";
+const UPPERCASE_LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ";
+const DIGITS = "23456789";
+const PASSWORD_CHARACTERS = `${LOWERCASE_LETTERS}${UPPERCASE_LETTERS}${DIGITS}`;
 
 export interface CaptainAccessResult {
   teamId: string;
   registrationId: string;
   newlyProvisioned: boolean;
-  username: string;
-  activationUrl: string;
+  loginUrl: string;
   whatsappUrl: string;
-  expiresAt: string;
 }
 
 interface AccessLead {
@@ -22,6 +25,7 @@ interface AccessLead {
   captain_name: string;
   email: string;
   whatsapp: string;
+  company_name: string;
 }
 
 function tokenHash(token: string) {
@@ -37,6 +41,24 @@ function usernameStem(name: string) {
     .replace(/^\.|\.$/g, "")
     .slice(0, 22);
   return /^[a-z]/.test(stem) && stem.length >= 3 ? stem : "captain";
+}
+
+function randomCharacter(characters: string) {
+  return characters[randomInt(characters.length)];
+}
+
+function generateCaptainPassword() {
+  const characters = [
+    randomCharacter(LOWERCASE_LETTERS),
+    randomCharacter(UPPERCASE_LETTERS),
+    randomCharacter(DIGITS),
+    ...Array.from({ length: GENERATED_PASSWORD_LENGTH - 3 }, () => randomCharacter(PASSWORD_CHARACTERS)),
+  ];
+  for (let index = characters.length - 1; index > 0; index -= 1) {
+    const replacementIndex = randomInt(index + 1);
+    [characters[index], characters[replacementIndex]] = [characters[replacementIndex], characters[index]];
+  }
+  return characters.join("");
 }
 
 async function createUniqueUsername(name: string) {
@@ -86,16 +108,15 @@ async function findCaptainForLead(leadId: string): Promise<User | null> {
   return userData.user;
 }
 
-async function getOrCreateCaptainUser(lead: AccessLead, username: string) {
+async function getOrCreateCaptainUser(lead: AccessLead, username: string, initialPassword: string) {
   const supabase = createSupabaseAdminClient();
   const linkedUser = await findCaptainForLead(lead.id);
   const legacyUser = linkedUser ?? await findAuthUserByEmail(lead.email);
   if (legacyUser) return { user: legacyUser, created: false };
 
-  const password = randomBytes(32).toString("base64url");
   const { data, error } = await supabase.auth.admin.createUser({
     email: `${username}@captain.auth.invalid`,
-    password,
+    password: initialPassword,
     email_confirm: true,
     user_metadata: { full_name: lead.captain_name },
     app_metadata: { provisioned_by: "one-dream-cup-admin" },
@@ -106,17 +127,15 @@ async function getOrCreateCaptainUser(lead: AccessLead, username: string) {
 
 export async function createCaptainAccess({
   leadId,
-  teamName,
   actorId,
 }: {
   leadId: string;
-  teamName: string;
   actorId: string;
 }): Promise<CaptainAccessResult> {
   const supabase = createSupabaseAdminClient();
   const { data: lead, error: leadError } = await supabase
     .from("leads")
-    .select("id,captain_name,email,whatsapp")
+    .select("id,captain_name,email,whatsapp,company_name")
     .eq("id", leadId)
     .is("deleted_at", null)
     .single();
@@ -131,7 +150,8 @@ export async function createCaptainAccess({
   }
   username ??= await createUniqueUsername(lead.captain_name);
 
-  const captain = await getOrCreateCaptainUser(lead as AccessLead, username);
+  const password = generateCaptainPassword();
+  const captain = await getOrCreateCaptainUser(lead as AccessLead, username, password);
   const { data: existingRoles, error: roleLookupError } = await supabase
     .from("profile_roles")
     .select("role")
@@ -149,7 +169,7 @@ export async function createCaptainAccess({
     p_lead_id: leadId,
     p_captain_profile_id: captain.user.id,
     p_captain_name: lead.captain_name,
-    p_team_name: teamName,
+    p_team_name: `${lead.company_name.trim()} XI`,
     p_actor_id: actorId,
   });
   if (provisionError) {
@@ -168,29 +188,31 @@ export async function createCaptainAccess({
     .eq("id", captain.user.id);
   if (profileError) throw profileError;
 
-  await supabase
+  const { error: revokeActivationError } = await supabase
     .from("captain_activation_tokens")
     .update({ used_at: new Date().toISOString() })
     .eq("profile_id", captain.user.id)
     .is("used_at", null);
+  if (revokeActivationError) throw revokeActivationError;
 
-  const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + ACTIVATION_LIFETIME_MS).toISOString();
-  const { error: tokenError } = await supabase.from("captain_activation_tokens").insert({
-    profile_id: captain.user.id,
-    token_hash: tokenHash(token),
-    expires_at: expiresAt,
-    created_by: actorId,
-  });
-  if (tokenError) throw tokenError;
+  if (!captain.created) {
+    const { error: passwordError } = await supabase.auth.admin.updateUserById(captain.user.id, { password });
+    if (passwordError) throw passwordError;
+  }
 
-  const activationUrl = new URL(`/activate/${token}`, env.NEXT_PUBLIC_SITE_URL).toString();
+  const activatedAt = new Date().toISOString();
+  const { error: activationStatusError } = await supabase
+    .from("profiles")
+    .update({ captain_activated_at: activatedAt, updated_at: activatedAt })
+    .eq("id", captain.user.id);
+  if (activationStatusError) console.error("Captain password was set but activation status could not be recorded.");
+
+  const loginUrl = buildCaptainLoginUrl(env.NEXT_PUBLIC_SITE_URL, username, password);
   const message = [
     `Hello ${lead.captain_name},`,
     "Your One Dream Cup captain access is ready.",
-    `Username: ${username}`,
-    `Create your password: ${activationUrl}`,
-    "This private link expires in 48 hours and can be used once.",
+    `Open your captain access: ${loginUrl}`,
+    "Please keep this private login link secure.",
   ].join("\n\n");
   const whatsappUrl = `https://wa.me/${lead.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
 
@@ -198,10 +220,8 @@ export async function createCaptainAccess({
     teamId: String(provision.team_id),
     registrationId: String(provision.registration_id),
     newlyProvisioned: Boolean(provision.newly_provisioned),
-    username,
-    activationUrl,
+    loginUrl,
     whatsappUrl,
-    expiresAt,
   };
 }
 

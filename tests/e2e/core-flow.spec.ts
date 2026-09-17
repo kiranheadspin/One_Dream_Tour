@@ -6,7 +6,7 @@ test("public page presents verified tournament facts", async ({ page }) => {
   await expect(page.getByTestId("hero-prize-pool")).toContainText("₹2,80,000");
   await expect(page.getByTestId("prize-breakdown")).toContainText("Winner₹1,50,000");
   await expect(page.getByTestId("prize-breakdown")).toContainText("Runner-up₹50,000");
-  await expect(page.getByTestId("prize-breakdown")).toContainText("8 qualifying teams₹10,000 each");
+  await expect(page.getByTestId("prize-breakdown")).toContainText("8 qualifying teams — Goa travel₹10,000 each");
   await expect(page.getByRole("link", { name: /Register team interest/i })).toBeVisible();
   await expect(page.getByTestId("road-to-goa-link")).toHaveAttribute("href", "/road-to-goa");
 });
@@ -144,15 +144,121 @@ test("admin teams include synthetic captains and pre-built enquiries", async ({ 
   await expect(page).toHaveURL(/\/admin/);
   await page.goto("/admin/teams");
   await expect(page.getByRole("heading", { name: "Teams" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Acme Blazers" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acme Technologies XI" })).toBeVisible();
+  await expect(page.getByText("Acme Blazers", { exact: true })).toBeVisible();
   await expect(page.getByText("Arjun Rao")).toBeVisible();
   await expect(page.getByText("Enquiry ODC-260801")).toBeVisible();
   await expect(page.locator("article")).toHaveCount(7);
-  await page.getByRole("link", { name: "View Acme Blazers" }).click();
+  await page.getByRole("link", { name: "View Acme Technologies XI" }).click();
   await expect(page).toHaveURL(/\/admin\/teams\/demo-team-2$/);
-  await expect(page.getByRole("heading", { name: "Acme Blazers" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acme Technologies XI" })).toBeVisible();
+  await expect(page.getByText("Captain's team name")).toBeVisible();
+  await expect(page.getByText("Acme Blazers", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Team members" })).toBeVisible();
   await expect(page.getByText("Arjun Rao").last()).toBeVisible();
+});
+
+test("admin publishes a conflict-checked fixture to the participating captain", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Schedule mutations run once against the shared demo store.");
+  test.setTimeout(60_000);
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview admin CRM/i }).click();
+  await expect(page).toHaveURL(/\/admin/);
+  await page.goto("/admin/schedule");
+  await expect(page.getByRole("heading", { name: "Schedule publishing" })).toBeVisible();
+  await expect(page.getByTestId("fixture-card").filter({ hasText: "Match 1" })).toContainText("Published");
+
+  await page.getByRole("button", { name: "Add venue" }).click();
+  await page.getByLabel("Tournament city").selectOption("demo-city-pune");
+  await page.getByLabel("Venue name").fill("E2E Cricket Ground");
+  await page.getByLabel("Address (optional)").fill("Central Pune");
+  await page.getByRole("button", { name: "Add venue", exact: true }).click();
+
+  const venueCard = page.getByTestId("venue-card").filter({ hasText: "E2E Cricket Ground" });
+  await venueCard.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Venue name").fill("E2E Cricket Ground Updated");
+  await page.getByLabel("Address (optional)").fill("Central Pune, Gate 2");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByTestId("venue-card").filter({ hasText: "E2E Cricket Ground Updated" })).toContainText("Central Pune, Gate 2");
+
+  await page.getByRole("button", { name: "New fixture" }).click();
+  await page.getByLabel("Match number").fill("9");
+  await page.getByLabel("Venue", { exact: true }).selectOption({ label: "E2E Cricket Ground Updated · Pune" });
+  await page.getByLabel("First team").selectOption("demo-team-1");
+  await page.getByLabel("Second team").selectOption("demo-team-3");
+  await page.getByLabel("Start time").fill("2026-12-12T09:00");
+  await page.getByLabel("End time").fill("2026-12-12T10:30");
+  await page.getByLabel("Captain note (optional)").fill("Report 45 minutes before the toss.");
+  await page.getByRole("button", { name: "Create fixture" }).click();
+  const draft = page.getByTestId("fixture-card").filter({ hasText: "Match 9" });
+  await expect(draft).toContainText("Draft");
+  await draft.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Captain note (optional)").fill("Report 30 minutes before the toss.");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(draft).toContainText("Report 30 minutes before the toss.");
+
+  await page.getByRole("button", { name: "New fixture" }).click();
+  await page.getByLabel("Match number").fill("10");
+  await page.getByLabel("Venue", { exact: true }).selectOption({ label: "E2E Cricket Ground Updated · Pune" });
+  await page.getByLabel("First team").selectOption("demo-team-4");
+  await page.getByLabel("Second team").selectOption("demo-team-5");
+  await page.getByLabel("Start time").fill("2026-12-12T09:30");
+  await page.getByLabel("End time").fill("2026-12-12T11:00");
+  await page.getByRole("button", { name: "Create fixture" }).click();
+  await expect(page.getByText("Conflicts with City qualifier match 9.")).toBeVisible();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview captain portal/i }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  await page.goto("/dashboard/schedule");
+  await expect(page.getByText("Match 9", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview admin CRM/i }).click();
+  await expect(page).toHaveURL(/\/admin/);
+  await page.goto("/admin/schedule");
+  const pendingFixture = page.getByTestId("fixture-card").filter({ hasText: "Match 9" });
+  await pendingFixture.getByRole("button", { name: "Publish" }).click();
+  await expect(pendingFixture).toContainText("Published");
+  await expect(pendingFixture.locator('a[href^="https://wa.me/?text="]')).toHaveAttribute("href", /^https:\/\/wa\.me\/\?text=/);
+
+  await page.goto("/");
+  const publicFixture = page.getByTestId("public-fixture-card").filter({ hasText: "Match 9" });
+  await expect(publicFixture).toContainText("Northstar Strikers vs BluePeak Chargers");
+  await expect(publicFixture).toContainText("E2E Cricket Ground Updated, Pune");
+  await expect(publicFixture).toContainText("Central Pune, Gate 2");
+  await expect(page.getByText("Report 30 minutes before the toss.")).toHaveCount(0);
+  await page.goto("/admin/schedule");
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview captain portal/i }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  await page.goto("/dashboard/schedule");
+  await expect(page.getByText("Match 9", { exact: true })).toBeVisible();
+  await expect(page.getByText("Report 30 minutes before the toss.")).toBeVisible();
+  await page.goto("/dashboard/announcements");
+  await expect(page.getByText("City qualifier: Northstar Strikers vs BluePeak Chargers", { exact: true })).toBeVisible();
+  await page.goto("/dashboard");
+  await expect(page.getByText("Next match", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Preview admin CRM/i }).click();
+  await page.goto("/admin/schedule");
+  const publishedFixture = page.getByTestId("fixture-card").filter({ hasText: "Match 9" });
+  page.once("dialog", (dialog) => dialog.accept());
+  await publishedFixture.getByRole("button", { name: "Delete" }).click();
+  await expect(publishedFixture).toHaveCount(0);
+  const updatedVenue = page.getByTestId("venue-card").filter({ hasText: "E2E Cricket Ground Updated" });
+  page.once("dialog", (dialog) => dialog.accept());
+  await updatedVenue.getByRole("button", { name: "Delete" }).click();
+  await expect(updatedVenue).toHaveCount(0);
+  await page.goto("/");
+  await expect(page.getByTestId("public-fixture-card").filter({ hasText: "Match 9" })).toHaveCount(0);
 });
 
 test("captain submits a UPI payment and admin confirms receipt", async ({ page }, testInfo) => {
@@ -171,8 +277,16 @@ test("captain submits a UPI payment and admin confirms receipt", async ({ page }
   await page.getByRole("button", { name: "Add player", exact: true }).click();
   await expect(page.getByRole("table").getByText("E2E Player")).toBeVisible();
 
+  await page.getByRole("button", { name: "Edit" }).last().click();
+  await page.getByLabel("Full name").fill("Updated E2E Player");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("table").getByText("Updated E2E Player")).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Remove" }).last().click();
+  await expect(page.getByRole("table").getByText("Updated E2E Player")).toBeHidden();
+
   await page.goto("/dashboard/rules");
-  await page.getByText(/I have reviewed this displayed rules version/i).click();
+  await page.getByText(/I have reviewed and accept rules version/i).click();
   await page.getByRole("button", { name: "Record acceptance" }).click();
   await expect(page.getByText(/accepted on/i)).toBeVisible();
 
@@ -273,6 +387,7 @@ test("captain mobile dashboard navigation closes after changing routes", async (
   await expect(navigation.getByLabel("Signed in profile")).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(navigation.getByRole("navigation", { name: "captain mobile navigation" })).toHaveCSS("overflow-y", "auto");
+  await expect(navigation.getByRole("link", { name: "Schedule" })).toHaveAttribute("href", "/dashboard/schedule");
   await expect(navigation.getByRole("link", { name: "Public site" })).toHaveAttribute("href", "/");
   await navigation.getByRole("link", { name: "Rules" }).click();
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captainInvitationSchema, leadSchema, playerSchema, shortLeadSchema } from "@/lib/validation";
+import { captainInvitationSchema, fixtureSchema, leadSchema, playerSchema, shortLeadSchema, venueSchema } from "@/lib/validation";
 
 const valid = {
   captainName: "Meera Nair", displayName: "Meera", phone: "+91 98765 43210", whatsapp: "+91 98765 43210",
@@ -73,5 +73,35 @@ describe("playerSchema", () => {
     expect(playerSchema.safeParse(player).success).toBe(true);
     expect(playerSchema.safeParse({ ...player, epfoNumber: "" }).success).toBe(true);
     expect(playerSchema.safeParse({ ...player, epfoNumber: "x".repeat(81) }).success).toBe(false);
+  });
+});
+
+describe("fixtureSchema", () => {
+  const fixture = {
+    venueId: "venue-1",
+    homeTeamId: "team-1",
+    awayTeamId: "team-2",
+    roundName: "City qualifier",
+    matchNumber: 1,
+    startsAt: "2026-11-21T03:30:00.000Z",
+    endsAt: "2026-11-21T05:00:00.000Z",
+    status: "draft",
+    notes: "",
+  };
+
+  it("accepts a complete fixture", () => {
+    expect(fixtureSchema.safeParse(fixture).success).toBe(true);
+  });
+
+  it("rejects the same team twice and invalid time ranges", () => {
+    expect(fixtureSchema.safeParse({ ...fixture, awayTeamId: fixture.homeTeamId }).success).toBe(false);
+    expect(fixtureSchema.safeParse({ ...fixture, endsAt: fixture.startsAt }).success).toBe(false);
+  });
+});
+
+describe("venueSchema", () => {
+  it("requires a city and a useful venue name", () => {
+    expect(venueSchema.safeParse({ tournamentCityId: "city-1", name: "Central Cricket Ground", address: "MG Road" }).success).toBe(true);
+    expect(venueSchema.safeParse({ tournamentCityId: "", name: "X", address: "" }).success).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
@@ -7,6 +8,7 @@ import { getCaptainActivation } from "@/lib/captain-access";
 import { isDemoMode } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function CaptainActivationPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

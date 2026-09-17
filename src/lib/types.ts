@@ -55,12 +55,14 @@ export interface Team {
   leadId?: string;
   enquiryReference?: string;
   name: string;
+  officialName?: string;
   company: string;
   city: City;
   captainName: string;
   captainEmail: string;
   registrationStatus: "Draft" | "Payment pending" | "Registered";
   rulesAcceptedAt?: string;
+  rulesVersion?: string;
   paymentStatus: "Not started" | "Pending" | "Paid" | "Failed" | "Refunded";
   players: Player[];
   updatedAt: string;
@@ -113,11 +115,82 @@ export interface ConsentRecord {
   createdAt: string;
 }
 
+export type FixtureStatus = "draft" | "published" | "cancelled";
+
+export interface ScheduleFixture {
+  id: string;
+  tournamentId?: string;
+  venueId: string;
+  venueName: string;
+  venueAddress?: string;
+  city: string;
+  roundName: string;
+  matchNumber: number;
+  startsAt: string;
+  endsAt: string;
+  homeTeamId: string;
+  homeTeamName: string;
+  awayTeamId: string;
+  awayTeamName: string;
+  status: FixtureStatus;
+  notes?: string;
+  publishedAt?: string;
+  updatedAt: string;
+}
+
+export interface PublicScheduleFixture {
+  id: string;
+  venueName: string;
+  venueAddress?: string;
+  city: string;
+  roundName: string;
+  matchNumber: number;
+  startsAt: string;
+  endsAt: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  publishedAt?: string;
+}
+
+export interface TournamentAnnouncement {
+  id: string;
+  fixtureId?: string;
+  title: string;
+  body: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleVenue {
+  id: string;
+  tournamentCityId?: string;
+  name: string;
+  address?: string;
+  city: string;
+}
+
+export interface ScheduleTeamOption {
+  id: string;
+  name: string;
+  officialName?: string;
+  company: string;
+  city: string;
+}
+
+export interface ScheduleCityOption {
+  id: string;
+  city: string;
+}
+
 export interface DemoDatabase {
   leads: Lead[];
   teams: Team[];
   payments: PaymentRecord[];
   audit: AuditEntry[];
   consents: ConsentRecord[];
+  fixtures: ScheduleFixture[];
+  announcements: TournamentAnnouncement[];
+  venues: ScheduleVenue[];
   processedWebhookIds: string[];
 }

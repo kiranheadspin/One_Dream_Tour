@@ -13,6 +13,9 @@ const captainUpsertFixMigration = readFileSync(path.join(process.cwd(), "supabas
 const passwordAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120001_password_access.sql"), "utf8");
 const captainCompanyAccessMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609120002_captain_company_access.sql"), "utf8");
 const leadNewBatchMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609130002_lead_new_batch_activity.sql"), "utf8");
+const fixturePublishingMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609140001_fixture_publishing.sql"), "utf8");
+const scheduleEditDeleteMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609140002_schedule_edit_delete.sql"), "utf8");
+const publicFixtureMigration = readFileSync(path.join(process.cwd(), "supabase/migrations/202609140003_public_fixture_announcements.sql"), "utf8");
 
 describe("database security migration", () => {
   it.each(["leads", "teams", "team_members", "payments", "payment_events", "consent_records", "audit_logs"])("enables RLS for %s", (table) => {
@@ -111,6 +114,17 @@ describe("database security migration", () => {
     );
   });
 
+  it("issues strong direct credentials for new captain access without persisting a plaintext password", () => {
+    const captainAccess = readFileSync(path.join(process.cwd(), "src/lib/captain-access.ts"), "utf8");
+    expect(captainAccess).toContain('const GENERATED_PASSWORD_LENGTH = 20;');
+    expect(captainAccess).toContain('randomCharacter(LOWERCASE_LETTERS)');
+    expect(captainAccess).toContain('randomCharacter(UPPERCASE_LETTERS)');
+    expect(captainAccess).toContain('randomCharacter(DIGITS)');
+    expect(captainAccess).toContain('const password = generateCaptainPassword();');
+    expect(captainAccess).toContain('`Password: ${password}`');
+    expect(captainAccess).not.toContain('password: password,');
+  });
+
   it("lets captains read only the company linked to their active team", () => {
     expect(captainCompanyAccessMigration).toContain("create policy companies_linked_captain_select");
     expect(captainCompanyAccessMigration).toContain("teams.company_id = companies.id");
@@ -123,5 +137,42 @@ describe("database security migration", () => {
     expect(leadNewBatchMigration).toContain("for update;");
     expect(leadNewBatchMigration).toContain("insert into public.lead_activities");
     expect(leadNewBatchMigration).toContain("grant execute on function public.update_lead_with_activity");
+  });
+
+  it("publishes fixtures atomically and prevents venue or team overlaps", () => {
+    expect(fixturePublishingMigration).toContain("alter table public.fixtures enable row level security;");
+    expect(fixturePublishingMigration).toContain("perform pg_catalog.pg_advisory_xact_lock");
+    expect(fixturePublishingMigration).toContain("fixture.starts_at < p_ends_at");
+    expect(fixturePublishingMigration).toContain("fixture.ends_at > p_starts_at");
+    expect(fixturePublishingMigration).toContain("on conflict (fixture_id) do update");
+    expect(fixturePublishingMigration).toContain("insert into public.audit_logs");
+  });
+
+  it("returns only the signed-in captain's published fixtures without widening team RLS", () => {
+    expect(fixturePublishingMigration).toContain("create or replace function public.get_my_published_fixtures()");
+    expect(fixturePublishingMigration).toContain("captain_team.captain_profile_id = (select auth.uid())");
+    expect(fixturePublishingMigration).toContain("captain_team.id in (fixture.home_team_id, fixture.away_team_id)");
+    expect(fixturePublishingMigration).toContain("grant execute on function public.get_my_published_fixtures() to authenticated;");
+  });
+
+  it("edits and soft-deletes schedule data through audited administrator functions", () => {
+    expect(scheduleEditDeleteMigration).toContain("create or replace function public.save_venue(");
+    expect(scheduleEditDeleteMigration).toContain("create or replace function public.delete_fixture(");
+    expect(scheduleEditDeleteMigration).toContain("create or replace function public.delete_venue(");
+    expect(scheduleEditDeleteMigration).toContain("raise exception 'Delete the fixtures using this venue first.'");
+    expect(scheduleEditDeleteMigration).toContain("set published_at = null,");
+    expect(scheduleEditDeleteMigration).toContain("'fixture.deleted'");
+    expect(scheduleEditDeleteMigration).toContain("'venue.deleted'");
+  });
+
+  it("exposes only safe upcoming published fixture fields to the public", () => {
+    expect(publicFixtureMigration).toContain("create or replace function public.get_public_published_fixtures()");
+    expect(publicFixtureMigration).toContain("fixture.status = 'published'");
+    expect(publicFixtureMigration).toContain("fixture.ends_at >= pg_catalog.now()");
+    expect(publicFixtureMigration).toContain("fixture.deleted_at is null");
+    expect(publicFixtureMigration).toContain("grant execute on function public.get_public_published_fixtures() to anon, authenticated;");
+    expect(publicFixtureMigration).not.toContain("notes");
+    const returnedColumns = publicFixtureMigration.match(/returns table \(([\s\S]*?)\)\nlanguage sql/)?.[1] ?? "";
+    expect(returnedColumns).not.toContain("team_id");
   });
 });

@@ -1,7 +1,7 @@
 export const TOURNAMENT = {
   name: "One Dream Cup",
   edition: "50th Special Edition",
-  format: "Seven-over corporate tennis-ball cricket",
+  format: "Corporate tennis-ball cricket; seven-over league stage",
   season: "November 2026–January 2027",
   feePaise: 1_450_000,
   prizePoolPaise: 28_000_000,

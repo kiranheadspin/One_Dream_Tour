@@ -1,9 +1,10 @@
+import { hasAcceptedCurrentRules, RULES_SOURCE, RULES_VERSION } from "@/lib/tournament-rules";
 import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { AuditEntry, DemoDatabase, Lead, PaymentRecord, Player } from "@/lib/types";
-import type { LeadInput } from "@/lib/validation";
+import type { AuditEntry, DemoDatabase, Lead, PaymentRecord, Player, ScheduleFixture, ScheduleVenue, TournamentAnnouncement } from "@/lib/types";
+import type { FixtureInput, LeadInput, VenueInput } from "@/lib/validation";
 import type { LeadStage } from "@/lib/constants";
 
 const dataDir = path.join(process.cwd(), ".data");
@@ -120,13 +121,58 @@ function sampleTeams(): DemoDatabase["teams"] {
   ];
 }
 
+export const DEMO_SCHEDULE_VENUES: ScheduleVenue[] = [
+  { id: "demo-venue-bangalore", tournamentCityId: "demo-city-bangalore", name: "One Dream Demo Ground", address: "Central Bangalore · preview venue", city: "Bangalore" },
+  { id: "demo-venue-chennai", tournamentCityId: "demo-city-chennai", name: "One Dream Demo Arena", address: "Central Chennai · preview venue", city: "Chennai" },
+  { id: "demo-venue-hyderabad", tournamentCityId: "demo-city-hyderabad", name: "One Dream Demo Oval", address: "Central Hyderabad · preview venue", city: "Hyderabad" },
+  { id: "demo-venue-pune", tournamentCityId: "demo-city-pune", name: "One Dream Demo Park", address: "Central Pune · preview venue", city: "Pune" },
+];
+
+function sampleFixtures(): ScheduleFixture[] {
+  return [{
+    id: "demo-fixture-1",
+    venueId: "demo-venue-bangalore",
+    venueName: "One Dream Demo Ground",
+    venueAddress: "Central Bangalore · preview venue",
+    city: "Bangalore",
+    roundName: "City qualifier",
+    matchNumber: 1,
+    startsAt: "2026-11-21T03:30:00.000Z",
+    endsAt: "2026-11-21T05:00:00.000Z",
+    homeTeamId: "demo-team-1",
+    homeTeamName: "Northstar Strikers",
+    awayTeamId: "demo-team-2",
+    awayTeamName: "Acme Blazers",
+    status: "published",
+    notes: "Arrive 45 minutes before the scheduled start.",
+    publishedAt: "2026-09-14T06:30:00.000Z",
+    updatedAt: "2026-09-14T06:30:00.000Z",
+  }];
+}
+
+function fixtureAnnouncement(fixture: ScheduleFixture, timestamp: string): TournamentAnnouncement {
+  return {
+    id: `announcement-${fixture.id}`,
+    fixtureId: fixture.id,
+    title: `${fixture.roundName}: ${fixture.homeTeamName} vs ${fixture.awayTeamName}`,
+    body: `${fixture.city} fixture confirmed at ${fixture.venueName}. Open Schedule for the verified date, time and venue details.`,
+    publishedAt: fixture.status === "published" ? timestamp : undefined,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
 function seed(): DemoDatabase {
+  const fixtures = sampleFixtures();
   return {
     leads: sampleLeads(),
     teams: sampleTeams(),
     payments: [],
     audit: [],
     consents: [],
+    fixtures,
+    announcements: fixtures.map((fixture) => fixtureAnnouncement(fixture, fixture.publishedAt ?? fixture.updatedAt)),
+    venues: DEMO_SCHEDULE_VENUES,
     processedWebhookIds: [],
   };
 }
@@ -148,12 +194,29 @@ export async function readDemoDatabase(): Promise<DemoDatabase> {
     const primaryTeam = database.teams.find((team) => team.id === "demo-team-1");
     let changed = false;
 
+    if (!Array.isArray(database.fixtures)) {
+      database.fixtures = sampleFixtures();
+      changed = true;
+    }
+    if (!Array.isArray(database.announcements)) {
+      database.announcements = database.fixtures.map((fixture) => fixtureAnnouncement(fixture, fixture.publishedAt ?? fixture.updatedAt));
+      changed = true;
+    }
+    if (!Array.isArray(database.venues)) {
+      database.venues = DEMO_SCHEDULE_VENUES;
+      changed = true;
+    }
+
     if (primaryTeam && (!primaryTeam.leadId || !primaryTeam.enquiryReference)) {
       primaryTeam.leadId = "demo-lead-2";
       primaryTeam.enquiryReference = "ODC-260802";
       changed = true;
     }
     for (const team of database.teams) {
+      if (!team.officialName) {
+        team.officialName = `${team.company} XI`;
+        changed = true;
+      }
       for (const player of team.players) {
         const storedPlayer = player as Player & { epfoNumber?: string };
         if (typeof storedPlayer.epfoNumber !== "string") {
@@ -211,6 +274,16 @@ export async function updateDemoLead(id: string, update: { stage?: LeadStage; as
   return lead;
 }
 
+export async function updateDemoTeamName(teamName: string) {
+  const database = await readDemoDatabase();
+  const team = database.teams[0];
+  team.name = teamName;
+  team.officialName ??= `${team.company} XI`;
+  team.updatedAt = new Date().toISOString();
+  await writeDatabase(database);
+  return team;
+}
+
 export async function addDemoPlayer(input: Omit<Player, "id" | "isCaptain">) {
   const database = await readDemoDatabase();
   const team = database.teams[0];
@@ -221,10 +294,151 @@ export async function addDemoPlayer(input: Omit<Player, "id" | "isCaptain">) {
   return player;
 }
 
+export async function updateDemoPlayer(id: string, input: Omit<Player, "id" | "isCaptain">) {
+  const database = await readDemoDatabase();
+  const team = database.teams[0];
+  const player = team.players.find((item) => item.id === id);
+  if (!player || player.isCaptain) return null;
+  Object.assign(player, input);
+  team.updatedAt = new Date().toISOString();
+  await writeDatabase(database);
+  return player;
+}
+
+export async function deleteDemoPlayer(id: string) {
+  const database = await readDemoDatabase();
+  const team = database.teams[0];
+  const playerIndex = team.players.findIndex((item) => item.id === id && !item.isCaptain);
+  if (playerIndex < 0) return false;
+  team.players.splice(playerIndex, 1);
+  team.updatedAt = new Date().toISOString();
+  await writeDatabase(database);
+  return true;
+}
+
+export async function saveDemoFixture(input: FixtureInput, fixtureId: string | undefined, actor: string) {
+  const database = await readDemoDatabase();
+  const venue = database.venues.find((item) => item.id === input.venueId);
+  const homeTeam = database.teams.find((team) => team.id === input.homeTeamId);
+  const awayTeam = database.teams.find((team) => team.id === input.awayTeamId);
+  if (!venue || !homeTeam || !awayTeam) return { fixture: null, error: "The selected venue or team is no longer available." };
+
+  const startsAt = new Date(input.startsAt).getTime();
+  const endsAt = new Date(input.endsAt).getTime();
+  const participants = new Set([input.homeTeamId, input.awayTeamId]);
+  const conflict = database.fixtures.find((fixture) => {
+    if (fixture.id === fixtureId || fixture.status === "cancelled") return false;
+    const overlaps = startsAt < new Date(fixture.endsAt).getTime() && endsAt > new Date(fixture.startsAt).getTime();
+    const sharesTeam = participants.has(fixture.homeTeamId) || participants.has(fixture.awayTeamId);
+    return overlaps && (fixture.venueId === input.venueId || sharesTeam);
+  });
+  if (conflict) return { fixture: null, error: `Conflicts with ${conflict.roundName} match ${conflict.matchNumber}.` };
+
+  const timestamp = new Date().toISOString();
+  const existing = fixtureId ? database.fixtures.find((fixture) => fixture.id === fixtureId) : undefined;
+  if (fixtureId && !existing) return { fixture: null, error: "Fixture not found." };
+  const fixture: ScheduleFixture = {
+    id: existing?.id ?? randomUUID(),
+    venueId: venue.id,
+    venueName: venue.name,
+    venueAddress: venue.address,
+    city: venue.city,
+    roundName: input.roundName,
+    matchNumber: input.matchNumber,
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    homeTeamId: homeTeam.id,
+    homeTeamName: homeTeam.name,
+    awayTeamId: awayTeam.id,
+    awayTeamName: awayTeam.name,
+    status: input.status,
+    notes: input.notes || undefined,
+    publishedAt: input.status === "published" ? existing?.publishedAt ?? timestamp : undefined,
+    updatedAt: timestamp,
+  };
+  if (existing) Object.assign(existing, fixture);
+  else database.fixtures.unshift(fixture);
+
+  const announcement = database.announcements.find((item) => item.fixtureId === fixture.id);
+  const nextAnnouncement = fixtureAnnouncement(fixture, timestamp);
+  if (announcement) Object.assign(announcement, nextAnnouncement, { id: announcement.id, createdAt: announcement.createdAt });
+  else database.announcements.unshift(nextAnnouncement);
+  database.audit.push({
+    id: randomUUID(),
+    actor,
+    action: existing ? "fixture.updated" : "fixture.created",
+    targetType: "fixture",
+    targetId: fixture.id,
+    metadata: { status: fixture.status, homeTeamId: fixture.homeTeamId, awayTeamId: fixture.awayTeamId },
+    createdAt: timestamp,
+  });
+  await writeDatabase(database);
+  return { fixture, error: null };
+}
+
+export async function saveDemoVenue(input: VenueInput, venueId: string | undefined, actor: string) {
+  const database = await readDemoDatabase();
+  const city = input.tournamentCityId.replace("demo-city-", "");
+  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  if (!['Bangalore', 'Chennai', 'Hyderabad', 'Pune'].includes(cityName)) return null;
+  const timestamp = new Date().toISOString();
+  const existing = venueId ? database.venues.find((venue) => venue.id === venueId) : undefined;
+  if (venueId && !existing) return null;
+  const venue: ScheduleVenue = {
+    id: existing?.id ?? randomUUID(),
+    tournamentCityId: input.tournamentCityId,
+    name: input.name,
+    address: input.address || undefined,
+    city: cityName,
+  };
+  if (existing) {
+    Object.assign(existing, venue);
+    for (const fixture of database.fixtures.filter((item) => item.venueId === venue.id)) {
+      fixture.venueName = venue.name;
+      fixture.venueAddress = venue.address;
+      fixture.city = venue.city;
+      fixture.updatedAt = timestamp;
+    }
+  } else {
+    database.venues.push(venue);
+  }
+  database.audit.push({ id: randomUUID(), actor, action: existing ? "venue.updated" : "venue.created", targetType: "venue", targetId: venue.id, metadata: { city: cityName }, createdAt: timestamp });
+  await writeDatabase(database);
+  return venue;
+}
+
+export async function deleteDemoFixture(fixtureId: string, actor: string) {
+  const database = await readDemoDatabase();
+  const fixtureIndex = database.fixtures.findIndex((fixture) => fixture.id === fixtureId);
+  if (fixtureIndex < 0) return false;
+  database.fixtures.splice(fixtureIndex, 1);
+  database.announcements = database.announcements.filter((announcement) => announcement.fixtureId !== fixtureId);
+  database.audit.push({ id: randomUUID(), actor, action: "fixture.deleted", targetType: "fixture", targetId: fixtureId, metadata: {}, createdAt: new Date().toISOString() });
+  await writeDatabase(database);
+  return true;
+}
+
+export async function deleteDemoVenue(venueId: string, actor: string) {
+  const database = await readDemoDatabase();
+  if (database.fixtures.some((fixture) => fixture.venueId === venueId)) {
+    return { deleted: false, error: "Delete the fixtures using this venue first." };
+  }
+  const venueIndex = database.venues.findIndex((venue) => venue.id === venueId);
+  if (venueIndex < 0) return { deleted: false, error: "Venue not found." };
+  database.venues.splice(venueIndex, 1);
+  database.audit.push({ id: randomUUID(), actor, action: "venue.deleted", targetType: "venue", targetId: venueId, metadata: {}, createdAt: new Date().toISOString() });
+  await writeDatabase(database);
+  return { deleted: true, error: null };
+}
+
 export async function acceptDemoRules() {
   const database = await readDemoDatabase();
   const team = database.teams[0];
+  if (hasAcceptedCurrentRules(team)) return team;
+  const previous = { version: team.rulesVersion, acceptedAt: team.rulesAcceptedAt };
   team.rulesAcceptedAt = new Date().toISOString();
+  team.rulesVersion = RULES_VERSION;
+  database.audit.push({ id: randomUUID(), actor: "demo-captain", action: "rules.accepted", targetType: "team", targetId: team.id, metadata: { previous, version: RULES_VERSION, sourceSha256: RULES_SOURCE.sha256 }, createdAt: team.rulesAcceptedAt });
   team.updatedAt = team.rulesAcceptedAt;
   await writeDatabase(database);
   return team;

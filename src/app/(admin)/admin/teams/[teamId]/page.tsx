@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAcceptedCurrentRules, RULES_SUMMARY } from "@/lib/tournament-rules";
 import { ArrowLeft, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AdminHeading } from "@/components/admin/admin-heading";
@@ -22,7 +23,7 @@ export default async function AdminTeamDetailPage({ params }: { params: Promise<
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to teams
       </Link>
       <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <AdminHeading eyebrow="Team record" title={team.name} description={`${team.company} · ${team.city}`} />
+        <AdminHeading eyebrow="Team record" title={team.name} description={team.memberName ? `${team.memberName} · ${team.company} · ${team.city}` : `${team.company} · ${team.city}`} />
         <Badge variant="secondary" className="mt-1">{team.registrationStatus}</Badge>
       </div>
 
@@ -31,6 +32,7 @@ export default async function AdminTeamDetailPage({ params }: { params: Promise<
           <h2 className="text-xl text-[#081326]">Team information</h2>
           <dl className="mt-5 grid gap-5 sm:grid-cols-2">
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Company</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.company}</dd></div>
+            <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Captain&apos;s team name</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.memberName ?? "Not selected"}</dd></div>
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Tournament city</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.city}</dd></div>
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Captain</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.captainName}</dd></div>
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Enquiry</dt><dd className="mt-1.5 font-mono text-sm font-semibold text-[#081326]">{team.enquiryReference}</dd></div>
@@ -42,12 +44,13 @@ export default async function AdminTeamDetailPage({ params }: { params: Promise<
           <dl className="mt-5 grid gap-5 sm:grid-cols-2">
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Registration</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.registrationStatus}</dd></div>
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Payment</dt><dd className="mt-1.5 font-semibold text-[#081326]">{team.paymentStatus}</dd></div>
-            <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Rules accepted</dt><dd className="mt-1.5 text-sm font-semibold text-[#081326]">{formattedDate(team.rulesAcceptedAt)}</dd></div>
+            <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Rules accepted</dt><dd className="mt-1.5 text-sm font-semibold text-[#081326]">{formattedDate(team.rulesAcceptedAt)}<span className="mt-1 block text-xs font-normal">{team.rulesVersion ?? "No version recorded"} · {hasAcceptedCurrentRules(team) ? "Current version" : "Current rules not accepted"}</span></dd></div>
             <div><dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Last updated</dt><dd className="mt-1.5 text-sm font-semibold text-[#081326]">{formattedDate(team.updatedAt)}</dd></div>
           </dl>
         </article>
       </section>
 
+      <section className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-5"><h2 className="text-xl text-[#081326]">Eligibility verification</h2><p className="mt-2 text-sm leading-6 text-slate-700">{RULES_SUMMARY.pfEntry}</p><p className="mt-2 text-sm leading-6 text-slate-700">{RULES_SUMMARY.evidence}</p><p className="mt-2 text-sm leading-6 text-slate-700">Verify same-company employment and participation in other city competitions with the organiser. Payment status and a saved roster do not certify eligibility. {team.players.filter((player) => !player.epfoNumber.trim()).length} roster entries have no PF/EPFO number recorded.</p></section>
       <section className="mt-7 overflow-hidden rounded-xl border bg-white">
         <div className="flex items-start justify-between gap-4 border-b p-5 sm:items-center sm:p-6">
           <div>

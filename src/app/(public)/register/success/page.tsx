@@ -1,6 +1,9 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CheckCircle2, MessageCircle } from "lucide-react";
 import { TOURNAMENT, whatsappUrl } from "@/lib/constants";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function SuccessPage({ searchParams }: { searchParams: Promise<{ reference?: string }> }) {
   const { reference = "Pending" } = await searchParams;

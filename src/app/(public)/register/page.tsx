@@ -3,7 +3,11 @@ import { BadgeIndianRupee, Building2, Clock3, MapPin } from "lucide-react";
 import { LeadForm } from "@/components/forms/lead-form";
 import { PageHero } from "@/components/public/page-hero";
 
-export const metadata: Metadata = { title: "Register — One Dream Cup S50" };
+export const metadata: Metadata = {
+  title: "Register Your Corporate Cricket Team",
+  description: "Submit an enquiry to register your company team for the One Dream Cup corporate tennis-ball cricket tournament.",
+  alternates: { canonical: "/register" },
+};
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const query = await searchParams;

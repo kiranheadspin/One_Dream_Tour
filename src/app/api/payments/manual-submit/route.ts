@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
+import { hasAcceptedCurrentRules } from "@/lib/tournament-rules";
+import { readDemoDatabase } from "@/lib/demo-store";
 import { TOURNAMENT } from "@/lib/constants";
 import { isDemoMode, upiPaymentConfig } from "@/lib/env";
 import { submitDemoUpiPayment } from "@/lib/demo-store";
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
   const transactionReference = parsed.data.transactionReference || undefined;
 
   if (isDemoMode) {
+    if (!hasAcceptedCurrentRules((await readDemoDatabase()).teams[0])) return NextResponse.json({ error: "Accept the current rules version first." }, { status: 409 });
     const payment = await submitDemoUpiPayment(idempotencyKey, transactionReference);
     return NextResponse.json({ payment });
   }
@@ -40,13 +43,13 @@ export async function POST(request: Request) {
   const supabase = createSupabaseAdminClient();
   const { data: team } = await supabase
     .from("teams")
-    .select("id,rules_accepted_at,registrations(id)")
+    .select("id,rules_accepted_at,rules_version,registrations(id)")
     .eq("captain_profile_id", session.userId)
     .is("deleted_at", null)
     .limit(1)
     .single();
-  if (!team || !team.rules_accepted_at) {
-    return NextResponse.json({ error: "Complete rules acceptance first." }, { status: 409 });
+  if (!team || !hasAcceptedCurrentRules({ rulesAcceptedAt: team.rules_accepted_at ?? undefined, rulesVersion: team.rules_version ?? undefined })) {
+    return NextResponse.json({ error: "Accept the current rules version first." }, { status: 409 });
   }
 
   const registrationRows = team.registrations;

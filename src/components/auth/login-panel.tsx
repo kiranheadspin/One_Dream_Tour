@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { showNavigationLoading } from "@/components/app/loading-overlay";
+import { credentialsFromLoginFragment } from "@/lib/credential-login-link";
 
 export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMode: boolean; nextPath?: string; initialMessage?: string }) {
   const router = useRouter();
@@ -14,6 +15,31 @@ export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMo
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
+  const autoSignInStarted = useRef(false);
+
+  const signInWithCredentials = useCallback(async (loginIdentifier: string, loginPassword: string) => {
+    setLoading(true); setMessage("");
+    const response = await fetch("/api/auth/sign-in", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ identifier: loginIdentifier, password: loginPassword, next: nextPath }) });
+    const result = await response.json() as { redirectTo?: string; error?: string };
+    setLoading(false);
+    if (!response.ok || !result.redirectTo) return setMessage(result.error ?? "Sign-in failed.");
+    showNavigationLoading("Signing you in");
+    router.push(result.redirectTo);
+    router.refresh();
+  }, [nextPath, router]);
+
+  useEffect(() => {
+    if (demoMode) return;
+    const credentials = credentialsFromLoginFragment(window.location.hash);
+    if (!credentials || autoSignInStarted.current) return;
+    autoSignInStarted.current = true;
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    queueMicrotask(() => {
+      setIdentifier(credentials.username);
+      setPassword(credentials.password);
+      void signInWithCredentials(credentials.username, credentials.password);
+    });
+  }, [demoMode, signInWithCredentials]);
 
   async function demoLogin(role: "admin" | "captain") {
     setLoading(true);
@@ -26,14 +52,8 @@ export function LoginPanel({ demoMode, nextPath, initialMessage = "" }: { demoMo
   }
 
   async function passwordLogin(event: React.FormEvent) {
-    event.preventDefault(); setLoading(true); setMessage("");
-    const response = await fetch("/api/auth/sign-in", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ identifier, password, next: nextPath }) });
-    const result = await response.json() as { redirectTo?: string; error?: string };
-    setLoading(false);
-    if (!response.ok || !result.redirectTo) return setMessage(result.error ?? "Sign-in failed.");
-    showNavigationLoading("Signing you in");
-    router.push(result.redirectTo);
-    router.refresh();
+    event.preventDefault();
+    await signInWithCredentials(identifier, password);
   }
 
   if (demoMode) return <div className="grid gap-4"><div className="rounded-md border border-[#d7aa54]/35 bg-[#d7aa54]/10 p-4 text-sm leading-6 text-[#66491f]">Demo access uses sample data and non-payable UPI review records. Choose a role to preview the protected product.</div><Button className="h-12 justify-between bg-[#313999] px-5 text-white" disabled={loading} onClick={() => demoLogin("captain")}><span className="inline-flex items-center gap-2"><UserRound data-icon="inline-start"/>Preview captain portal</span><ArrowRight data-icon="inline-end"/></Button><Button variant="outline" className="h-12 justify-between px-5" disabled={loading} onClick={() => demoLogin("admin")}><span className="inline-flex items-center gap-2"><ShieldCheck data-icon="inline-start"/>Preview admin CRM</span><ArrowRight data-icon="inline-end"/></Button>{message && <p role="alert" className="text-sm text-destructive">{message}</p>}</div>;

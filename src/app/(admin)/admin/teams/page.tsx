@@ -22,6 +22,7 @@ export default async function AdminTeamsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl text-[#081326]">{team.name}</h2>
+                  {team.memberName ? <p className="mt-1 text-sm font-medium text-[#313999]">{team.memberName}</p> : null}
                   <p className="mt-2 text-sm text-slate-500">{team.company} · {team.city}</p>
                   <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#313999]">Enquiry {team.enquiryReference}</p>
                 </div>

@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, Circle, Clock3, MapPin, MessageCircle, Users } from "lucide-react";
+import { hasAcceptedCurrentRules, PLAYING_SIDE_SIZE } from "@/lib/tournament-rules";
+import { AlertTriangle, ArrowRight, CalendarDays, Check, Circle, Clock3, MapPin, MessageCircle, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/auth";
 import { whatsappUrl } from "@/lib/constants";
 import { getCaptainTeamOrNull } from "@/lib/teams";
+import { formatFixtureDateTime } from "@/lib/schedule-format";
+import { listCaptainFixtures } from "@/lib/schedule";
 
 export default async function CaptainDashboard() {
   const session = await requireRole("captain");
-  const team = await getCaptainTeamOrNull(session.userId);
+  const [team, fixtures] = await Promise.all([getCaptainTeamOrNull(session.userId), listCaptainFixtures()]);
 
   if (!team) {
     return (
@@ -28,19 +31,20 @@ export default async function CaptainDashboard() {
 
   const steps = [
     { label: "Company & team", complete: true, href: "/dashboard/team" },
-    { label: "Players", complete: team.players.length >= 2, href: "/dashboard/team" },
-    { label: "Rules", complete: Boolean(team.rulesAcceptedAt), href: "/dashboard/rules" },
+    { label: "Players", complete: team.players.length >= PLAYING_SIDE_SIZE, href: "/dashboard/team" },
+    { label: "Rules", complete: hasAcceptedCurrentRules(team), href: "/dashboard/rules" },
     { label: "Payment", complete: team.paymentStatus === "Paid", href: "/dashboard/payment" },
   ];
   const completion = steps.filter((step) => step.complete).length * 25;
   const registrationComplete = team.paymentStatus === "Paid";
-  const nextHref = !team.rulesAcceptedAt ? "/dashboard/rules" : registrationComplete ? "/dashboard/confirmation" : "/dashboard/payment";
-  const nextTitle = !team.rulesAcceptedAt ? "Review the rules" : registrationComplete ? "Registration complete" : "Complete payment";
-  const nextCopy = !team.rulesAcceptedAt
+  const nextHref = !hasAcceptedCurrentRules(team) ? "/dashboard/rules" : registrationComplete ? "/dashboard/confirmation" : "/dashboard/payment";
+  const nextTitle = !hasAcceptedCurrentRules(team) ? "Review the rules" : registrationComplete ? "Registration complete" : "Complete payment";
+  const nextCopy = !hasAcceptedCurrentRules(team)
     ? "Read and record acceptance of the displayed rules version."
     : registrationComplete
       ? "Your payment has been recorded and your team registration is confirmed."
       : "Review the confirmed amount and terms before paying.";
+  const nextMatch = fixtures.find((fixture) => new Date(fixture.endsAt) >= new Date()) ?? fixtures[0];
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -61,6 +65,7 @@ export default async function CaptainDashboard() {
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Your team</p>
                 <h2 className="mt-1 truncate text-2xl text-[#081326] sm:text-3xl">{team.name}</h2>
+                <p className="mt-1 text-sm text-slate-500">{team.officialName ?? `${team.company} XI`}</p>
                 <p className="mt-1.5 flex items-center gap-2 text-sm text-slate-500"><MapPin aria-hidden="true" className="size-4 shrink-0" /><span className="truncate">{team.company} · {team.city}</span></p>
               </div>
             </div>
@@ -95,6 +100,15 @@ export default async function CaptainDashboard() {
             <h2 className="mt-4 text-xl text-[#081326]">Operational details</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">Exact city date and venue are pending administrator confirmation. You will be notified when verified.</p>
           </div>
+          {nextMatch ? (
+            <Link href="/dashboard/schedule" className="group rounded-xl border border-[#d7aa54]/60 bg-[#fffaf0] p-5 transition-colors hover:border-[#d7aa54] sm:p-6">
+              <CalendarDays aria-hidden="true" className="size-5 text-[#8d672c]" />
+              <p className="eyebrow mt-4 text-[#8d672c]">Next match</p>
+              <h2 className="mt-2 text-xl text-[#081326]">{nextMatch.homeTeamName} vs {nextMatch.awayTeamName}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{formatFixtureDateTime(nextMatch.startsAt)} · {nextMatch.venueName}</p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#313999]">View schedule <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" /></span>
+            </Link>
+          ) : null}
         </aside>
       </div>
     </div>

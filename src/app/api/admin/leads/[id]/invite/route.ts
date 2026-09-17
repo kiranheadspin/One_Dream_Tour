@@ -32,15 +32,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     const access = await createCaptainAccess({
       leadId: id,
-      teamName: parsed.data.teamName,
       actorId: session.userId,
     });
 
     return NextResponse.json(
       {
         message: access.newlyProvisioned
-          ? "Captain access created. Share the one-time link on WhatsApp."
-          : "A new one-time activation link was created.",
+          ? "Captain access created. Share the generated credentials on WhatsApp."
+          : "A new password was generated. Share the new credentials on WhatsApp.",
         ...access,
       },
       { status: access.newlyProvisioned ? 201 : 200, headers: { "cache-control": "no-store" } },

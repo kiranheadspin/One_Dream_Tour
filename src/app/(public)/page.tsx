@@ -1,8 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Building2, CalendarDays, Check, ShieldCheck, Trophy, Users } from "lucide-react";
+import { PublishedFixtures } from "@/components/public/published-fixtures";
 import { RegisterInterestLink } from "@/components/public/register-interest-link";
 import { CITY_SCHEDULE, TOURNAMENT, formatInr, whatsappUrl } from "@/lib/constants";
+import { listPublicFixtures } from "@/lib/public-schedule";
+import { absoluteUrl, serializeJsonLd } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const cities = [
   { name: "Bangalore", note: "Where the league energy begins", code: "BLR" },
@@ -14,29 +22,35 @@ const cities = [
 const prizeBreakdown = [
   { label: "Winner", amountPaise: TOURNAMENT.winnerPaise },
   { label: "Runner-up", amountPaise: TOURNAMENT.runnerUpPaise },
-  { label: "8 qualifying teams", amountPaise: TOURNAMENT.qualifierAwardPaise, suffix: "each" },
+  { label: "8 qualifying teams — Goa travel", amountPaise: TOURNAMENT.qualifierAwardPaise, suffix: "each" },
 ] as const;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
   name: "One Dream Cup — 50th Special Edition",
-  description: "A pure corporate seven-over tennis-ball cricket tournament across Bangalore, Chennai, Hyderabad and Pune, with finals in Goa.",
+  description: "A men’s corporate tennis-ball cricket tournament with seven-over league matches across Bangalore, Chennai, Hyderabad and Pune, with finals in Goa.",
   startDate: "2026-11-21",
   endDate: "2027-01-31",
   eventStatus: "https://schema.org/EventScheduled",
   eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-  organizer: { "@type": "Organization", name: "One Dream Group", url: siteUrl },
+  organizer: { "@id": `${absoluteUrl("/")}#organization` },
   location: TOURNAMENT.cities.map((city) => ({ "@type": "Place", name: `${city} city league` })),
-  subEvent: TOURNAMENT.cities.map((city) => ({ "@type": "SportsEvent", name: `${city} city league`, ...CITY_SCHEDULE[city] })),
-  offers: { "@type": "Offer", price: "14500", priceCurrency: "INR", availability: "https://schema.org/LimitedAvailability", url: `${siteUrl}/register` },
+  subEvent: TOURNAMENT.cities.map((city) => ({
+    "@type": "SportsEvent",
+    name: `${city} city league`,
+    startDate: CITY_SCHEDULE[city].startDate,
+    endDate: CITY_SCHEDULE[city].endDate,
+    location: { "@type": "City", name: city },
+  })),
+  offers: { "@type": "Offer", price: "14500", priceCurrency: "INR", availability: "https://schema.org/LimitedAvailability", url: absoluteUrl("/register") },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const publicFixtures = await listPublicFixtures();
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
       <section className="relative isolate min-h-[690px] overflow-hidden bg-[#081326] text-white sm:min-h-[760px]">
         <Image src="/images/one-dream-cup-hero.png" alt="Corporate cricket player ready to bat under stadium lights" fill priority sizes="100vw" className="-z-20 object-cover object-[68%_center] opacity-90" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(5,16,31,.98)_0%,rgba(5,16,31,.93)_43%,rgba(5,16,31,.34)_68%,rgba(5,16,31,.05)_100%)] max-md:bg-[#081326]/76" />
@@ -63,6 +77,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <PublishedFixtures fixtures={publicFixtures} />
+
       <section className="bg-[#f7f3ea] section-pad">
         <div className="container-shell grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
           <div><p className="eyebrow text-[#8d672c]">Built for corporate teams</p><h2 className="mt-4 text-balance text-4xl leading-tight text-[#081326] sm:text-5xl">Cricket with a purpose bigger than the scoreboard.</h2></div>
@@ -85,7 +101,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div><p className="eyebrow text-[#d7aa54]">The road to Goa</p><h2 className="mt-4 text-balance text-4xl sm:text-5xl">Eight qualifiers. One unforgettable finish.</h2><p className="mt-6 max-w-xl leading-7 text-white/65">Two teams from every city advance to the quarter-finals in Goa. Exact match dates and venues will be published only after they are confirmed.</p><Link href="/road-to-goa" className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#e6c27d]">See the tournament journey <ArrowRight aria-hidden="true" className="size-4" /></Link></div>
           <div className="border border-white/12 bg-white/5 p-7">
-            {[['City competition','League matches, pre-quarter-finals, quarter-finals and semi-finals'],['Top two qualify','Two city teams earn their Goa place and ₹10,000 each'],['Goa knockouts','Eight teams enter the quarter-finals, then semi-finals'],['Champion crowned','The final decides the 50th Edition champion']].map(([title,copy],index)=><div key={title} className="flex gap-4 border-b border-white/10 py-5 last:border-0"><span className="grid size-8 shrink-0 place-items-center rounded-full border border-[#d7aa54]/50 font-heading text-[#d7aa54]">{index+1}</span><div><h3 className="text-lg">{title}</h3><p className="mt-1 text-sm text-white/55">{copy}</p></div></div>)}
+            {[['City competition','League matches, pre-quarter-finals, quarter-finals and semi-finals'],['Top two qualify','Two city teams earn their Goa place and ₹10,000 each for travel'],['Goa knockouts','Eight teams enter the quarter-finals, then semi-finals'],['Champion crowned','The final decides the 50th Edition champion']].map(([title,copy],index)=><div key={title} className="flex gap-4 border-b border-white/10 py-5 last:border-0"><span className="grid size-8 shrink-0 place-items-center rounded-full border border-[#d7aa54]/50 font-heading text-[#d7aa54]">{index+1}</span><div><h3 className="text-lg">{title}</h3><p className="mt-1 text-sm text-white/55">{copy}</p></div></div>)}
           </div>
         </div>
       </section>
